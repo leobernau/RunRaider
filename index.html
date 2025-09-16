@@ -3,675 +3,755 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bernau Runner — Cute Endless Runner</title>
+<title>Run Raider — Dark Endless Runner with Power-ups</title>
 <style>
-  :root { --bg1:#FFF6FB; --bg2:#E8F7FF; --accent:#FFD6E0; --muted:#6b6b6b; }
-  html,body { height:100%; margin:0; font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial; background: linear-gradient(180deg,var(--bg1),var(--bg2)); }
-  #gameCanvas { display:block; width:100vw; height:100vh; background:transparent; }
-  #ui { position:absolute; inset:0; pointer-events:none; }
-  .centerMenu { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
-  .panel { background: rgba(255,255,255,0.9); border-radius:12px; padding:18px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width:860px; max-width:92%; }
-  .title { font-size:34px; margin:0 0 6px; }
-  .sub { margin:0 0 14px; color:var(--muted); font-size:14px; }
-  .btn { display:inline-block; pointer-events:auto; border:0; background:linear-gradient(180deg,#FFD6E0,#FF9CCC); color:#1a1a1a; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer; }
-  .btn.alt { background:linear-gradient(180deg,#D7F0FF,#A9E0FF); }
-  #hud { position:absolute; left:12px; top:12px; pointer-events:none; display:flex; gap:10px; align-items:center; }
-  .chip { background:rgba(255,255,255,0.95); padding:8px 10px; border-radius:10px; font-weight:700; color:#222; pointer-events:none; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-  #bigScore { position:absolute; top:12px; left:50%; transform:translateX(-50%); pointer-events:none; font-weight:800; font-size:22px; color:#222; background: rgba(255,255,255,0.95); padding:8px 14px; border-radius:12px; }
-  #controls { position:absolute; bottom:12px; left:12px; background:rgba(255,255,255,0.95); padding:8px 10px; border-radius:10px; font-size:13px; color:#222; }
-  #shopGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-top:12px; }
-  .skinCard { background:rgba(255,255,255,0.98); padding:8px; border-radius:10px; text-align:center; box-shadow:0 8px 16px rgba(0,0,0,0.06); }
-  .skinPreview { width:68px; height:86px; margin:0 auto 8px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; }
-  .muted { color:var(--muted); font-size:13px; }
-  @media (max-width:720px) { .panel { padding:12px; } .title { font-size:22px; } .bigTitle { font-size:26px; } }
+  :root{
+    --bg1:#07070b; --bg2:#0f1016; --panel:#0f1720; --accent:#00e5ff; --accent2:#ff6b6b; --muted:#9aa3b2;
+  }
+  html,body{ height:100%; margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#dfe7ef; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+  canvas{ display:block; width:100vw; height:100vh; background:transparent; }
+  /* UI overlay */
+  #ui{ position:absolute; inset:0; pointer-events:none; }
+  .panel{ background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); border-radius:12px; padding:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6); color:#e6eef6; }
+  .center{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
+  .menuBox{ width:840px; max-width:94%; text-align:center; gap:8px; display:flex; flex-direction:column; align-items:center; }
+  h1{ margin:0; font-size:34px; letter-spacing:0.6px; color:#ffffff; text-shadow:0 6px 30px rgba(0,0,0,0.6); }
+  p.lead{ margin:0; color:var(--muted); font-size:13px; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  button.btn{ pointer-events:auto; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; background:linear-gradient(180deg,#0ff9ff10,#00e5ff14); color:var(--accent); border:1px solid rgba(0,229,255,0.06); }
+  button.btn.alt{ background:linear-gradient(180deg,#ff6b6b10,#ff6b6b12); color:var(--accent2); border:1px solid rgba(255,107,107,0.06); }
+  button.btn.ghost{ background:transparent; color:var(--muted); border:1px dashed rgba(255,255,255,0.04); }
+  #hud{ position:absolute; left:16px; top:12px; display:flex; gap:10px; align-items:center; pointer-events:none; }
+  .chip{ background:rgba(255,255,255,0.02); padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); font-weight:700; font-size:13px; color:#dfe7ef; }
+  #bigScore{ position:absolute; left:50%; transform:translateX(-50%); top:12px; pointer-events:none; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); font-weight:800; font-size:18px; }
+  #controls{ position:absolute; bottom:12px; left:12px; pointer-events:none; background:rgba(255,255,255,0.02); border-radius:10px; padding:8px; border:1px solid rgba(255,255,255,0.02); color:var(--muted); font-size:13px; }
+  /* shop grid */
+  #shopGrid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap:10px; width:760px; max-width:94%; }
+  .skinCard{ background:rgba(255,255,255,0.02); padding:10px; border-radius:10px; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:auto; border:1px solid rgba(255,255,255,0.02); }
+  .skinPreview{ width:68px; height:86px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; box-shadow: 0 8px 18px rgba(0,0,0,0.6); color:#101218; }
+  /* small responsive */
+  @media (max-width:720px){ h1{ font-size:26px } .menuBox{ padding:10px } #shopGrid{ grid-template-columns:repeat(2,1fr) } }
 </style>
 </head>
 <body>
-<canvas id="gameCanvas"></canvas>
+<canvas id="c"></canvas>
 
 <div id="ui">
   <div id="hud">
     <div class="chip" id="coinsChip">Coins: 0</div>
-    <div class="chip" id="distChip">Distance: 0m</div>
+    <div class="chip" id="powerChip">Power: —</div>
   </div>
 
-  <div id="bigScore">Score: <span id="scoreVal">0</span></div>
+  <div id="bigScore">RUN RAIDER — Score: <span id="scoreVal">0</span></div>
 
-  <div id="menu" class="centerMenu">
-    <div class="panel" id="menuPanel">
-      <h2 class="title">Bernau Runner</h2>
-      <div class="sub">Cute endless runner — jump, slide, collect coins and buy skins. Space to jump • Down to slide • P pause</div>
-      <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
-        <button id="startBtn" class="btn">Play (Space)</button>
-        <button id="shopBtn" class="btn alt">Shop</button>
-        <button id="resetBtn" class="btn" style="background:linear-gradient(180deg,#FFD6A6,#FFB27A)">Reset Save</button>
+  <!-- Main Menu -->
+  <div id="menu" class="center">
+    <div class="menuBox panel">
+      <h1>RUN RAIDER</h1>
+      <p class="lead">Darker, serious neon-runner. Collect power-ups: Shield, Magnet, Double-Jump. Survive and climb the leaderboard.</p>
+      <div class="row">
+        <button id="startBtn" class="btn">Start (Space)</button>
+        <button id="shopBtn" class="btn">Shop</button>
+        <button id="howBtn" class="btn ghost">How to Play</button>
+        <button id="resetBtn" class="btn alt">Reset Save</button>
       </div>
-      <div style="margin-top:12px; display:flex; gap:8px; justify-content:center; align-items:center;">
-        <div class="muted">High Score:</div><div id="highScore" class="muted" style="font-weight:800">0</div>
-        <div style="width:10px"></div>
-        <div class="muted">Total Coins:</div><div id="savedCoins" class="muted" style="font-weight:800">0</div>
+      <div style="margin-top:8px; display:flex; gap:8px; justify-content:center; align-items:center;">
+        <div style="text-align:center; color:var(--muted)">High Score<br><strong id="highScore">0</strong></div>
+        <div style="width:18px"></div>
+        <div style="text-align:center; color:var(--muted)">Total Coins<br><strong id="savedCoins">0</strong></div>
       </div>
     </div>
   </div>
 
-  <div id="shop" class="centerMenu" style="display:none;">
-    <div class="panel" id="shopPanel">
-      <h3 class="title">Shop — Skins</h3>
-      <div class="sub">Buy new colors for your runner. Owned skins persist. Equip a skin to use it in-game.</div>
+  <!-- How to play -->
+  <div id="how" class="center" style="display:none; pointer-events:auto;">
+    <div class="panel menuBox">
+      <h1>How to Play</h1>
+      <p class="lead">Space: jump (double-jump if you have it) • Down / S: slide • Collect coins and power-ups. P: pause, R: restart. Power-ups last briefly — plan their use.</p>
+      <div class="row"><button id="howBack" class="btn">Back</button></div>
+    </div>
+  </div>
+
+  <!-- Shop -->
+  <div id="shop" class="center" style="display:none; pointer-events:auto;">
+    <div class="panel menuBox">
+      <h1>Shop — Skins & Power-ups</h1>
+      <p class="lead">Buy skins with coins. Power-ups can be bought as permanent perks (optional) or found during runs.</p>
       <div id="shopGrid"></div>
-      <div style="margin-top:12px;">
-        <button id="closeShop" class="btn alt">Close</button>
-      </div>
+      <div class="row" style="margin-top:8px;"><button id="shopBack" class="btn">Close</button></div>
     </div>
   </div>
 
-  <div id="pausePanel" class="centerMenu" style="display:none;">
-    <div class="panel">
-      <h3 class="title">Paused</h3>
-      <div class="sub">Press P to resume or R to restart the run.</div>
-      <div style="display:flex; gap:8px; justify-content:center;">
-        <button id="resumeBtn" class="btn alt">Resume (P)</button>
-        <button id="restartBtn" class="btn">Restart (R)</button>
-      </div>
+  <!-- Pause -->
+  <div id="pause" class="center" style="display:none; pointer-events:auto;">
+    <div class="panel menuBox">
+      <h1>Paused</h1>
+      <p class="lead">P to resume or R to restart.</p>
+      <div class="row"><button id="resumeBtn" class="btn">Resume (P)</button><button id="restartBtn" class="btn alt">Restart (R)</button></div>
     </div>
   </div>
 
-  <div id="gameOverPanel" class="centerMenu" style="display:none;">
-    <div class="panel">
-      <h3 class="title">Run Over</h3>
-      <div class="sub">Score: <span id="finalScore">0</span> • Distance: <span id="finalDist">0</span>m • Coins: <span id="finalCoins">0</span></div>
-      <div style="display:flex; gap:8px; justify-content:center;">
-        <button id="tryAgainBtn" class="btn">Try Again</button>
-        <button id="backMenuBtn" class="btn alt">Back to Menu</button>
-      </div>
+  <!-- Game Over -->
+  <div id="gameOver" class="center" style="display:none; pointer-events:auto;">
+    <div class="panel menuBox">
+      <h1>Run Over</h1>
+      <p class="lead">Score <strong id="finalScore">0</strong> • Coins collected <strong id="finalCoins">0</strong></p>
+      <div class="row"><button id="tryBtn" class="btn">Try Again</button><button id="menuBtn" class="btn ghost">Back to Menu</button></div>
     </div>
   </div>
 
-  <div id="controls" style="display:block;">Controls: Space = jump • Down/S = slide • P = pause • R = restart</div>
+  <div id="controls" class="chip">Space = Jump • Down/S = Slide • P = Pause • R = Restart</div>
 </div>
 
 <script>
-/*
-Bernau Runner — Cute Endless Runner
-Single-file game with:
-- Auto-run scrolling world
-- Jump (space / tap) and slide (down / S)
-- Coins, obstacles, platforms, distance & score
-- Shop with skins, using coins persisted in localStorage
-- Pause (P), Restart (R), Start menu
-- Responsive canvas and simple particle effects
+/* Run Raider
+ - Darker neon style endless runner
+ - Power-ups: Shield (invulnerable), Magnet (pulls coins), Double-Jump
+ - Shop with skins and optional permanent perks
+ - LocalStorage save for high score, coins, owned skins, equipped skin, purchased perks
+ - Buttons and UI fixed to be clickable
 */
 
-///// ----------------- Configuration
-const GAME_CONFIG = {
-  gravity: 0.55,
-  jumpPower: 11.6,
-  slideDuration: 520, // ms
-  runSpeedBase: 3.2,   // base world scroll speed
-  speedIncreasePerMeter: 0.02, // difficulty scaling
-  coinValue: 1
-};
-
-const LEVEL_SEED = 1337; // not used but reserved for future deterministic levels
-
-// Skins available in shop
-const SKINS = [
-  {id:'sun', name:'Sunbeam', color:'#FFD28A', price:0},
-  {id:'mint', name:'Mint', color:'#C8FFD0', price:18},
-  {id:'lav', name:'Lavender', color:'#D8C6FF', price:34},
-  {id:'peach', name:'Peach', color:'#FFC6A8', price:65},
-  {id:'starlit', name:'Starlit', color:'#FFF59A', price:110},
-];
-
-const STORAGE_KEY = 'bernau_runner_save_v1';
-
-///// ----------------- Canvas setup
-const canvas = document.getElementById('gameCanvas');
+// Canvas setup
+const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = innerWidth;
 let H = canvas.height = innerHeight;
 window.addEventListener('resize', ()=> { W = canvas.width = innerWidth; H = canvas.height = innerHeight; });
 
-///// ----------------- UI nodes
-const menuEl = document.getElementById('menu');
-const shopEl = document.getElementById('shop');
-const pausePanel = document.getElementById('pausePanel');
-const gameOverPanel = document.getElementById('gameOverPanel');
-const startBtn = document.getElementById('startBtn');
-const shopBtn = document.getElementById('shopBtn');
-const resetBtn = document.getElementById('resetBtn');
-const closeShopBtn = document.getElementById('closeShop');
-const resumeBtn = document.getElementById('resumeBtn');
-const restartBtn = document.getElementById('restartBtn');
-const tryAgainBtn = document.getElementById('tryAgainBtn');
-const backMenuBtn = document.getElementById('backMenuBtn');
+/* ---------------------
+   Game config and state
+   --------------------- */
+const CONFIG = {
+  gravity: 0.56,
+  jumpPower: 12.2,
+  baseSpeed: 3.4,
+  speedScalePer100: 0.6,
+  slideDuration: 520,
+  coinValue: 1
+};
 
-const coinsChip = document.getElementById('coinsChip');
-const distChip = document.getElementById('distChip');
-const scoreVal = document.getElementById('scoreVal');
-const highScoreEl = document.getElementById('highScore');
-const savedCoinsEl = document.getElementById('savedCoins');
+// power-up durations (ms)
+const POWERUP_DUR = {
+  shield: 4500,
+  magnet: 5000,
+  doublejump: 7500
+};
 
-const finalScoreEl = document.getElementById('finalScore');
-const finalDistEl = document.getElementById('finalDist');
-const finalCoinsEl = document.getElementById('finalCoins');
+// skins and shop items
+const SKINS = [
+  { id:'raider', name:'Raider', color:'#2ee8ff', price:0 },
+  { id:'onyx', name:'Onyx', color:'#9fb6ff', price:40 },
+  { id:'ember', name:'Ember', color:'#ff7d7d', price:85 },
+  { id:'neon', name:'Neon', color:'#8affb3', price:140 },
+  { id:'void', name:'Void', color:'#bdb7ff', price:220 },
+];
+// permanent perks in shop (optional): buy to spawn with the perk permanently
+const PERKS = [
+  { id:'perk_doublejump', name:'Permanent Double-Jump', price:150, key:'perk_doublejump' },
+  { id:'perk_magnet', name:'Permanent Magnet', price:130, key:'perk_magnet' },
+  { id:'perk_shield', name:'Permanent Shield', price:170, key:'perk_shield' }
+];
 
-const shopGrid = document.getElementById('shopGrid');
+// localStorage key
+const SAVE_KEY = 'run_raider_v1';
 
-///// ----------------- Save / shop state
+// Save structure: { highScore, totalCoins, ownedSkins[], equipped, perks: {perk_doublejump:true,...} }
 function loadSave() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { highScore:0, totalCoins:0, ownedSkins:['sun'], equipped:'sun' };
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return { highScore:0, totalCoins:0, ownedSkins:['raider'], equipped:'raider', perks:{} };
     const p = JSON.parse(raw);
     return {
       highScore: p.highScore || 0,
       totalCoins: p.totalCoins || 0,
-      ownedSkins: Array.isArray(p.ownedSkins) ? p.ownedSkins : ['sun'],
-      equipped: p.equipped || 'sun'
+      ownedSkins: Array.isArray(p.ownedSkins) ? p.ownedSkins : ['raider'],
+      equipped: p.equipped || 'raider',
+      perks: p.perks || {}
     };
-  } catch(e) {
-    return { highScore:0, totalCoins:0, ownedSkins:['sun'], equipped:'sun' };
+  } catch (e) {
+    return { highScore:0, totalCoins:0, ownedSkins:['raider'], equipped:'raider', perks:{} };
   }
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(save)); }
+function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
 let save = loadSave();
 
-///// ----------------- Game state
-let running = false;
-let paused = false;
-let lastFrame = performance.now();
-let dtAccum = 0;
+/* ---------------------
+   Runtime state
+   --------------------- */
+let running = false, paused = false;
+let lastTime = performance.now();
 
-// Player
-const player = {
-  x: 160,
-  y: 0,
-  w: 44,
-  h: 60,
-  vy: 0,
-  onGround: false,
-  sliding: false,
-  slideTimer: 0,
-  color: '#FFD28A'
-};
-
-// World
-let scroll = 0;        // total distance scrolled in pixels
-let meters = 0;        // converted meters for HUD
-let runSpeed = GAME_CONFIG.runSpeedBase;
+// world / runner
+let scroll = 0;      // total pixels scrolled
+let speed = CONFIG.baseSpeed;
+let distance = 0;
+let score = 0;
+let coinsCollectedRun = 0;
 let spawnTimer = 0;
 
-// Entities: platforms, obstacles, coins
-let platforms = [];
-let obstacles = [];
-let coins = [];
-let particles = [];
+// entities: platforms, coins, obstacles, powerups
+let platforms = [], coins = [], obstacles = [], powerups = [], particles = [];
 
-// Score
-let score = 0;
-let coinsCollected = 0;
-let distanceMeters = 0;
+// player
+const player = {
+  x: 160, y: 0, w: 44, h: 60,
+  vy: 0, onGround: true, sliding: false, slideTimer:0,
+  jumpsUsed:0, maxJumps:1
+};
 
-// Input
+// active power-ups (timed)
+let activePower = { shield:0, magnet:0, doublejump:0 };
+
+// UI refs
+const menu = document.getElementById('menu'), shop = document.getElementById('shop'), how = document.getElementById('how');
+const pausePanel = document.getElementById('pause'), gameOverPanel = document.getElementById('gameOver');
+const coinsChip = document.getElementById('coinsChip'), powerChip = document.getElementById('powerChip');
+const scoreVal = document.getElementById('scoreVal'), highScoreEl = document.getElementById('highScore');
+const savedCoinsEl = document.getElementById('savedCoins');
+const finalScore = document.getElementById('finalScore'), finalCoins = document.getElementById('finalCoins');
+
+applySaveToUI();
+
+/* ---------------------
+   Input handling
+   --------------------- */
 const keys = {};
-window.addEventListener('keydown', (e)=> { keys[e.key.toLowerCase()] = true; if (!running && e.key === ' ') startRun(); if (e.key === 'p' && running) togglePause(); if (e.key === 'r' && running) restartRun(); });
-window.addEventListener('keyup', (e)=> keys[e.key.toLowerCase()] = false;
-
-// Touch / click -> jump
+window.addEventListener('keydown', (e)=> {
+  keys[e.key.toLowerCase()] = true;
+  if (!running && e.key === ' ') startRun();
+  if (e.key === 'p') togglePause();
+  if (e.key === 'r' && running) restartRun();
+  // gameplay keys
+  if (running && !paused) {
+    if (e.key === ' ' || e.code === 'Space') attemptJump();
+    if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') startSlide();
+  }
+});
+window.addEventListener('keyup', (e)=> {
+  keys[e.key.toLowerCase()] = false;
+  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') stopSlide();
+});
+// pointer tap => jump
 canvas.addEventListener('pointerdown', (e)=> {
-  // small area taps for slide vs jump detection could be implemented; for simplicity: tap to jump
   if (running && !paused) attemptJump();
+  else if (!running) startRun();
 });
 
-///// ----------------- Initialization
-resetGameState();
-updateUI();
-buildShop();
-
-///// ----------------- Core functions
-
-function resetGameState() {
-  // reset gameplay variables for a fresh run
-  scroll = 0; meters = 0; runSpeed = GAME_CONFIG.runSpeedBase; spawnTimer = 0;
-  platforms = [];
-  obstacles = [];
-  coins = [];
-  particles = [];
-  score = 0; coinsCollected = 0; distanceMeters = 0;
-  player.y = H - groundHeight() - player.h;
-  player.vy = 0; player.onGround = true; player.sliding = false; player.slideTimer = 0;
-  // start with a long initial platform
-  platforms.push({ x: -800, y: player.y + player.h, w: 2000, h: 18 });
-  // ensure small variations ahead
+/* ---------------------
+   Generation helpers
+   --------------------- */
+function groundY() { return Math.round(H * 0.14); }
+function resetWorld() {
+  scroll = 0; speed = CONFIG.baseSpeed; distance = 0; score = 0; coinsCollectedRun = 0; spawnTimer = 0;
+  platforms = []; coins = []; obstacles = []; powerups = []; particles = [];
+  player.y = H - groundY() - player.h; player.vy = 0; player.onGround = true; player.sliding=false; player.slideTimer=0; player.jumpsUsed=0;
+  // initial long platform
+  platforms.push({ x:-800, y: player.y + player.h, w: 2200, h: 18 });
+  // spawn some initial chunks
   for (let i=0;i<3;i++) generateChunk();
+  // grant starting permanent perks if purchased
+  if (save.perks && save.perks['perk_doublejump']) player.maxJumps = 2; else player.maxJumps = 1;
+  if (save.perks && save.perks['perk_doublejump']) player.jumpsUsed = 0;
 }
 
-function groundHeight() {
-  return Math.round(H * 0.12); // ground band height from bottom
+/* conservative spacing and chunk gen */
+function computeGap() {
+  // random gap in px
+  return 120 + Math.random()*300;
 }
 
-function startRun(){
-  resetGameState();
-  running = true;
-  paused = false;
-  lastFrame = performance.now();
-  menuEl.style.display = 'none';
-  shopEl.style.display = 'none';
-  pausePanel.style.display = 'none';
-  gameOverPanel.style.display = 'none';
-  requestAnimationFrame(loop);
+function generateChunk() {
+  // append platforms, coins, obstacles, powerups further to the right
+  const last = platforms[platforms.length-1];
+  let x = last ? (last.x + last.w + computeGap()) : (scroll + W + 120);
+  const segments = 2 + Math.floor(Math.random()*4);
+  const ground = H - groundY();
+  for (let s=0; s<segments; s++){
+    const pw = 100 + Math.random()*220;
+    const py = ground - 18 + (Math.random()*80 - 30);
+    platforms.push({ x: x, y: py, w: pw, h: 18 });
+    // maybe add coins
+    if (Math.random() < 0.86) {
+      const coinCount = 1 + Math.floor(Math.random()*3);
+      for (let c=0;c<coinCount;c++){
+        coins.push({ x: x + 16 + Math.random()*(pw - 32), y: py - 28 - Math.random()*36, r: 8, taken:false });
+      }
+    }
+    // maybe obstacle (spike)
+    if (Math.random() < 0.36) {
+      obstacles.push({ x: x + 20 + Math.random()*(pw - 40), y: py - 30, w: 26, h: 30 });
+    }
+    // rarely spawn power-up pickup
+    if (Math.random() < 0.12) {
+      const types = ['shield','magnet','doublejump'];
+      const t = types[Math.floor(Math.random()*types.length)];
+      powerups.push({ x: x + 12 + Math.random()*(pw - 24), y: py - 44 - Math.random()*20, type: t, picked:false });
+    }
+    x += pw + computeGap()*0.9;
+  }
+}
+
+/* ---------------------
+   Power-up logic
+   --------------------- */
+function grantPowerup(type) {
+  if (type === 'shield') {
+    activePower.shield = POWERUP_DUR.shield;
+  } else if (type === 'magnet') {
+    activePower.magnet = POWERUP_DUR.magnet;
+  } else if (type === 'doublejump') {
+    activePower.doublejump = POWERUP_DUR.doublejump;
+    player.maxJumps = Math.max(player.maxJumps, 2);
+  }
+}
+
+/* ---------------------
+   Main loop & update
+   --------------------- */
+let animId = null;
+function startRun() {
+  resetWorld();
+  running = true; paused = false;
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('shop').style.display = 'none';
+  document.getElementById('how').style.display = 'none';
+  document.getElementById('gameOver').style.display = 'none';
+  lastTime = performance.now();
+  animId = requestAnimationFrame(loop);
+}
+
+function restartRun() { resetWorld(); running = true; paused = false; document.getElementById('gameOver').style.display='none'; lastTime = performance.now(); animId = requestAnimationFrame(loop); }
+
+function togglePause(){
+  paused = !paused;
+  document.getElementById('pause').style.display = paused ? 'flex' : 'none';
+  if (!paused) {
+    lastTime = performance.now();
+    animId = requestAnimationFrame(loop);
+  } else {
+    if (animId) cancelAnimationFrame(animId);
+  }
 }
 
 function endRun() {
   running = false;
-  // update high score & total coins
+  // finalize score & save coins
   if (score > save.highScore) save.highScore = Math.round(score);
-  save.totalCoins = (save.totalCoins || 0) + coinsCollected;
-  saveState();
+  save.totalCoins = (save.totalCoins || 0) + coinsCollectedRun;
+  saveGame();
   // show game over
   document.getElementById('finalScore').textContent = Math.round(score);
-  document.getElementById('finalDist').textContent = Math.round(distanceMeters);
-  document.getElementById('finalCoins').textContent = coinsCollected;
-  // show UI
-  gameOverPanel.style.display = 'flex';
-  updateUI();
+  document.getElementById('finalCoins').textContent = coinsCollectedRun;
+  document.getElementById('gameOver').style.display = 'flex';
+  applySaveToUI();
+  if (animId) cancelAnimationFrame(animId);
 }
 
-function restartRun(){
-  resetGameState();
-  running = true;
-  paused = false;
-  lastFrame = performance.now();
-  menuEl.style.display = 'none';
-  gameOverPanel.style.display = 'none';
-  requestAnimationFrame(loop);
-}
-
-function togglePause(){
-  paused = !paused;
-  pausePanel.style.display = paused ? 'flex' : 'none';
-  if (!paused) {
-    lastFrame = performance.now();
-    requestAnimationFrame(loop);
-  }
-}
-
-// attempt to jump
-function attemptJump(){
-  if (!running || paused) return;
-  if (player.onGround && !player.sliding) {
-    player.vy = -GAME_CONFIG.jumpPower;
-    player.onGround = false;
-    spawnParticles(player.x + player.w/2, player.y + player.h, '#9DF7A8', 8);
-  } else if (player.onGround && player.sliding) {
-    // sliding + jump gives small extra push
-    player.vy = -GAME_CONFIG.jumpPower * 0.88;
-    player.sliding = false; player.slideTimer = 0;
-  }
-}
-
-// start sliding
-function startSlide(){
-  if (!running || paused) return;
-  if (player.onGround && !player.sliding) {
-    player.sliding = true;
-    player.slideTimer = GAME_CONFIG.slideDuration;
-    // shrink height visually
-  }
-}
-
-// stop sliding
-function stopSlide(){
-  player.sliding = false;
-  player.slideTimer = 0;
-}
-
-// small particle spawn
-function spawnParticles(x,y,color,count=8){
-  for (let i=0;i<count;i++){
-    particles.push({
-      x, y,
-      vx: (Math.random()-0.5)*3,
-      vy: -Math.random()*3 - 1,
-      life: 400 + Math.random()*300,
-      color,
-      size: 2 + Math.random()*3
-    });
-  }
-}
-
-///// ----------------- Procedural generation
-// Generates obstacles, coins and small platforms ahead
-function generateChunk() {
-  // place chunks relative to last platform end
-  let last = platforms[platforms.length-1];
-  const startX = last ? (last.x + last.w) : (scroll + W + 200);
-  // create a sequence of segments (gaps and small platform islands)
-  let x = startX + randRange(140, 280);
-  const segments = 4 + Math.floor(Math.random()*3);
-  for (let s=0;s<segments;s++){
-    // platform height relative to ground
-    const groundY = H - groundHeight();
-    const yOffset = randRange(-80, 40);
-    const pw = randRange(80, 220);
-    const py = groundY - 18 + yOffset;
-    platforms.push({ x: x, y: py, w: pw, h: 18 });
-    // maybe add coins above
-    if (Math.random() < 0.8) {
-      const coinCount = 1 + Math.floor(Math.random()*3);
-      for (let c=0;c<coinCount;c++){
-        coins.push({ x: x + 16 + Math.random()*(pw-32), y: py - 28 - Math.random()*24, r:8, taken:false });
-      }
-    }
-    // maybe add obstacle on platform
-    if (Math.random() < 0.4) {
-      const obsX = x + 20 + Math.random()*(pw-40);
-      obstacles.push({ x: obsX, y: py - 30, w: 26, h: 30, type:'spike' });
-    }
-    x += pw + randRange(120, 320);
-  }
-}
-
-///// ----------------- Update loop
-function loop(now){
+function loop(now) {
   if (!running) return;
-  const dt = Math.min(40, now - lastFrame); lastFrame = now;
+  const dt = Math.min(40, now - lastTime); lastTime = now;
   if (!paused) update(dt);
   draw();
-  if (running) requestAnimationFrame(loop);
+  animId = requestAnimationFrame(loop);
 }
 
-function update(dt){
-  // speed scales slightly with distance
-  const speedFactor = 1 + (Math.max(0, meters/15) * GAME_CONFIG.speedIncreasePerMeter);
-  const currentSpeed = runSpeed * speedFactor;
+function update(dt) {
+  // speed scaling with distance
+  const speedFactor = 1 + (distance / 100) * (CONFIG.speedScalePer100 / 100);
+  speed = CONFIG.baseSpeed + speedFactor;
+  const worldShift = speed * (dt / 16.67);
+  scroll += worldShift;
+  distance += worldShift * 0.02;
+  score += worldShift * 0.25;
 
-  // advance world scroll
-  scroll += currentSpeed * (dt / 16.67); // normalize to frame
-  distanceMeters = scroll * 0.02; // px -> meters roughly
-  meters = distanceMeters;
-
-  // spawn more content when needed
+  // spawn new chunks
   spawnTimer += dt;
-  if (spawnTimer > 420) {
-    spawnTimer = 0;
-    generateChunk();
-  }
+  if (spawnTimer > 420) { spawnTimer = 0; generateChunk(); }
 
   // player physics
-  player.vy += GAME_CONFIG.gravity * (dt/16.67);
+  player.vy += CONFIG.gravity * (dt / 16.67);
   player.y += player.vy * (dt / 16.67);
-
-  // ground collision
-  const groundY = H - groundHeight();
-  if (player.y + player.h >= groundY) {
-    player.y = groundY - player.h;
+  // ground
+  const ground = H - groundY();
+  if (player.y + player.h >= ground) {
+    player.y = ground - player.h;
     player.vy = 0;
     player.onGround = true;
+    player.jumpsUsed = 0;
   } else {
     player.onGround = false;
   }
 
-  // sliding timer
+  // slide handling
   if (player.sliding) {
     player.slideTimer -= dt;
     if (player.slideTimer <= 0) stopSlide();
   }
 
-  // update obstacles / coins positions relative to scroll (we keep world coords, but collision uses scroll)
-  // remove old objects far left
-  platforms = platforms.filter(p => (p.x + p.w - scroll) > -400);
-  coins = coins.filter(c => (c.x - scroll) > -200 && !c.taken);
-  obstacles = obstacles.filter(o => (o.x - scroll) > -200);
-
-  // collisions: coins
+  // move platforms/coins/obstacles relative to scroll: we keep world coords and detect collisions subtracting scroll
+  // coins collect
   for (const c of coins) {
-    const px = player.x, py = player.y;
-    let pw = player.w, ph = player.h;
-    if (player.sliding) { ph = player.h * 0.55; }
-    const dx = (px + pw/2) - c.x;
-    const dy = (py + ph/2) - c.y;
+    if (c.taken) continue;
+    const sx = c.x - scroll;
+    // magnet effect
+    if (activePower.magnet > 0) {
+      // If within 240px horizontally, slowly pull toward player
+      if (Math.abs(sx - player.x) < 260) {
+        c.x += (player.x - sx) * 0.06; // in world coords, approximate attract
+      }
+    }
+    const dx = (player.x + player.w/2) - sx;
+    const dy = (player.y + player.h/2) - c.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
-    if (!c.taken && dist < 28) {
+    if (dist < 28) {
       c.taken = true;
-      coinsCollected++;
-      spawnParticles(c.x, c.y, '#FFD66B', 10);
-      score += 12;
+      coinsCollectedRun += CONFIG.coinValue;
+      score += 16;
+      spawnParticles(sx, c.y, '#ffd66b', 10);
     }
   }
 
-  // collisions: obstacles (spike)
+  // obstacles collision
   for (const o of obstacles) {
-    // we treat obstacle coords in world-space; collision if player intersects and obstacle not passed
-    const ox = o.x - scroll, oy = o.y;
-    const playerRect = { x: player.x, y: player.y, w: player.w, h: player.h };
-    const obsRect = { x: ox, y: oy, w: o.w, h: o.h };
-    if (rectIntersectWorld(playerRect, obsRect)) {
-      // hit — run over
-      endRun();
-      return;
+    const ox = o.x - scroll;
+    const oy = o.y;
+    // rectangle collision with player
+    const pRect = { x: player.x, y: player.y, w: player.w, h: player.h };
+    const oRect = { x: ox, y: oy, w: o.w, h: o.h };
+    if (rectsOverlap(pRect, oRect)) {
+      if (activePower.shield > 0 || save.perks['perk_shield']) {
+        // consume shield if active (if permanent perk, we don't consume)
+        if (!save.perks['perk_shield']) activePower.shield = 0;
+        // destroy obstacle visually
+        spawnParticles(ox + o.w/2, oy + o.h/2, '#ff7d7d', 12);
+      } else {
+        // death
+        endRun(); return;
+      }
     }
   }
 
-  // also if player falls into a big gap (no platform below) -> if y too low (off-screen) end run
-  if (player.y > H + 140) { endRun(); return; }
-
-  // score increases by distance and coins
-  score += (currentSpeed * (dt/16.67)) * 0.3;
-  // update UI
-  updateUI();
-}
-
-function rectIntersectWorld(playerRect, obsRect) {
-  // obsRect is in screen coords (ox), playerRect in screen coords too; just check overlap
-  if (playerRect.x < obsRect.x + obsRect.w && playerRect.x + playerRect.w > obsRect.x &&
-      playerRect.y < obsRect.y + obsRect.h && playerRect.y + playerRect.h > obsRect.y) {
-    return true;
+  // powerup pickups
+  for (const pu of powerups) {
+    if (pu.picked) continue;
+    const sx = pu.x - scroll;
+    const dx = (player.x + player.w/2) - sx;
+    const dy = (player.y + player.h/2) - pu.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 34) {
+      pu.picked = true;
+      grantPowerup(pu.type);
+      spawnParticles(sx, pu.y, pu.type === 'magnet' ? '#8affb3' : (pu.type==='shield' ? '#9dd7ff' : '#ffd78a'), 14);
+      score += 28;
+    }
   }
-  return false;
+
+  // timers for active power-ups
+  for (const k of Object.keys(activePower)) {
+    if (activePower[k] > 0) activePower[k] -= dt;
+    if (activePower[k] < 0) activePower[k] = 0;
+  }
+  // if doublejump expired and no perk, reset maxJumps
+  if (activePower.doublejump <= 0 && !save.perks['perk_doublejump']) player.maxJumps = 1;
+
+  // clean up old entities behind screen
+  platforms = platforms.filter(p => p.x + p.w - scroll > -400);
+  coins = coins.filter(c => !c.taken && c.x - scroll > -300);
+  obstacles = obstacles.filter(o => o.x - scroll > -300);
+  powerups = powerups.filter(pu => !pu.picked && pu.x - scroll > -300);
+
+  // update particles
+  for (let i = particles.length-1; i>=0; i--) {
+    const p = particles[i];
+    p.life -= dt;
+    p.x += p.vx * (dt/16.67); p.y += p.vy * (dt/16.67);
+    p.vy += 0.08 * (dt/16.67);
+    if (p.life <= 0) particles.splice(i,1);
+  }
+
+  // update HUD / UI
+  applySaveToUI();
 }
 
-///// ----------------- Input behavior mapping
-// Keyboard actions
-window.addEventListener('keydown', (e)=> {
-  if (!running) return;
-  if (e.key === ' ' || e.code === 'Space') { attemptJump(); e.preventDefault(); }
-  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') { startSlide(); e.preventDefault(); }
-});
+/* ---------------------
+   Collision helpers
+   --------------------- */
+function rectsOverlap(a,b){ return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h); }
 
-// release slide on keyup
-window.addEventListener('keyup', (e)=> {
-  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') stopSlide();
-});
+/* ---------------------
+   Player actions: jump / slide
+   --------------------- */
+function attemptJump(){
+  if (!running || paused) return;
+  if (player.onGround) {
+    player.vy = -CONFIG.jumpPower;
+    player.onGround = false;
+    player.jumpsUsed = 1;
+  } else {
+    // mid-air double-jump allowed if available
+    const canPermanent = !!save.perks['perk_doublejump'];
+    const canActive = activePower.doublejump > 0;
+    if ((player.jumpsUsed < player.maxJumps) || canPermanent || canActive) {
+      player.vy = -CONFIG.jumpPower * 0.9;
+      player.jumpsUsed++;
+      // if doublejump was active (timed) it does not stack; if permanent, keep maxJumps
+      spawnParticles(player.x + player.w/2, player.y + player.h, '#ffd78a', 10);
+    }
+  }
+}
 
-///// ----------------- Drawing
+function startSlide(){
+  if (!running || paused) return;
+  if (player.onGround && !player.sliding) {
+    player.sliding = true;
+    player.slideTimer = CONFIG.slideDuration;
+  }
+}
+function stopSlide(){
+  player.sliding = false;
+  player.slideTimer = 0;
+}
+
+/* ---------------------
+   Grant power-ups (timed)
+   --------------------- */
+function grantPowerup(type){
+  if (type === 'shield') activePower.shield = POWERUP_DUR.shield;
+  if (type === 'magnet') activePower.magnet = POWERUP_DUR.magnet;
+  if (type === 'doublejump') {
+    activePower.doublejump = POWERUP_DUR.doublejump;
+    player.maxJumps = Math.max(player.maxJumps, 2);
+  }
+}
+
+/* ---------------------
+   Particles
+   --------------------- */
+function spawnParticles(x,y,color,count=8){
+  for (let i=0;i<count;i++){
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5) * 2.6,
+      vy: -Math.random()*3 - 1,
+      life: 300 + Math.random()*240,
+      size: 2 + Math.random()*3,
+      color
+    });
+  }
+}
+
+/* ---------------------
+   Draw routine (darker, neon aesthetics)
+   --------------------- */
 function draw(){
-  // clear & background
+  // background
   ctx.clearRect(0,0,W,H);
-  // sky gradient
   const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#FFF4F9'); g.addColorStop(0.6,'#F3F9FF'); g.addColorStop(1,'#E7F7FF');
+  g.addColorStop(0,'#070712'); g.addColorStop(1,'#0f1018');
   ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
 
-  // parallax hills
-  drawHills();
+  // parallax neon skyline
+  drawNeonHills();
 
   // ground band
-  const groundY = H - groundHeight();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, groundY, W, groundHeight());
-  ctx.fillStyle = '#EDEDED';
-  ctx.fillRect(0, groundY + 6, W, 3);
+  const gY = H - groundY();
+  ctx.fillStyle = '#0b0f14'; ctx.fillRect(0, gY, W, groundY());
+  ctx.fillStyle = '#0f1720'; ctx.fillRect(0, gY+6, W, 4);
 
-  // draw platforms (world coords -> screen by subtracting scroll)
+  // world transform: draw world items relative to scroll
   ctx.save();
   ctx.translate(-Math.round(scroll), 0);
 
   // platforms
   for (const p of platforms) {
-    ctx.fillStyle = '#CDE8FF';
-    roundRect(ctx, p.x, p.y, p.w, p.h, 8, true, false);
-    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(ctx, p.x + 6, p.y + 2, Math.max(0,p.w - 12), 6, 6, true, false);
+    ctx.fillStyle = '#101825';
+    roundRect(p.x, p.y, p.w, p.h, 8, true);
+    // neon rim
+    ctx.strokeStyle = 'rgba(0,229,255,0.06)'; ctx.lineWidth = 1;
+    ctx.strokeRect(p.x+1, p.y+1, p.w-2, p.h-2);
   }
 
   // coins
   for (const c of coins) {
     if (c.taken) continue;
-    ctx.fillStyle = '#FFD66B';
-    circle(ctx, c.x, c.y, c.r);
-    ctx.fillStyle = 'rgba(255,255,255,0.7)'; circle(ctx, c.x - c.r*0.2, c.y - c.r*0.25, c.r*0.22);
+    ctx.fillStyle = '#ffd66b';
+    circle(c.x, c.y, c.r);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    circle(c.x - 2, c.y - 3, c.r*0.22);
   }
 
-  // obstacles (in world coordinates)
+  // obstacles (spikes)
   for (const o of obstacles) {
-    // draw spike
-    ctx.fillStyle = '#FF5A5A';
     const sx = o.x, sy = o.y;
-    const sc = 4;
-    for (let i=0;i<Math.floor(o.w / 12); i++){
+    ctx.fillStyle = '#ff6b6b';
+    const spikeCount = Math.max(2, Math.floor(o.w/12));
+    for (let i=0;i<spikeCount;i++){
       const cx = sx + 6 + i*12;
       ctx.beginPath(); ctx.moveTo(cx - 6, sy + o.h); ctx.lineTo(cx, sy); ctx.lineTo(cx + 6, sy + o.h); ctx.closePath(); ctx.fill();
     }
   }
 
-  // star / bonuses could be here (none for now)
+  // powerups pickups
+  for (const pu of powerups){
+    const px = pu.x, py = pu.y;
+    if (pu.type === 'shield') {
+      ctx.fillStyle = '#9dd7ff';
+      circle(px, py, 12);
+    } else if (pu.type === 'magnet') {
+      ctx.fillStyle = '#8affb3';
+      circle(px, py, 12);
+    } else if (pu.type === 'doublejump') {
+      ctx.fillStyle = '#ffd78a';
+      circle(px, py, 12);
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.12)'; circle(px, py, 6);
+  }
 
   ctx.restore();
 
   // draw player (screen coords)
-  // if sliding, shrink height and lower y
-  const drawX = player.x;
-  let drawY = player.y;
-  let drawW = player.w;
-  let drawH = player.h;
-  if (player.sliding) {
-    drawH = Math.round(player.h * 0.56);
-    drawY = player.y + (player.h - drawH);
+  let drawX = player.x, drawY = player.y;
+  let drawW = player.w, drawH = player.h;
+  if (player.sliding) { drawH = Math.round(player.h * 0.56); drawY = player.y + (player.h - drawH); }
+  const skin = SKINS.find(s=> s.id === save.equipped) || SKINS[0];
+  ctx.fillStyle = skin.color;
+  roundRect(drawX, drawY, drawW, drawH, 10, true);
+  // eyes (neon)
+  ctx.fillStyle = '#081018'; ctx.beginPath(); ctx.ellipse(drawX + drawW*0.28, drawY + drawH*0.34, 4,5,0,0,Math.PI*2); ctx.ellipse(drawX + drawW*0.72, drawY + drawH*0.34, 4,5,0,0,Math.PI*2); ctx.fill();
+  // shield visual
+  if (activePower.shield > 0 || save.perks['perk_shield']) {
+    ctx.strokeStyle = 'rgba(157,215,255,0.35)'; ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.ellipse(drawX + drawW/2, drawY + drawH/2, drawW*0.9, drawH*0.9, 0, 0, Math.PI*2); ctx.stroke();
   }
-  const skin = SKINS.find(s => s.id === (save.equipped || 'sun')) || SKINS[0];
-  ctx.fillStyle = skin.color || '#FFD28A';
-  roundRect(ctx, drawX, drawY, drawW, drawH, 10, true, false);
-  // eyes
-  ctx.fillStyle = '#2B2B2B';
-  ctx.beginPath(); ctx.ellipse(drawX + drawW * 0.30, drawY + drawH * 0.36, 4, 5, 0, 0, Math.PI*2); ctx.ellipse(drawX + drawW * 0.70, drawY + drawH * 0.36, 4, 5, 0, 0, Math.PI*2); ctx.fill();
 
-  // particles (screen coords)
+  // particles
   for (const p of particles) {
-    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life/600); circle(ctx, p.x, p.y, p.size); ctx.globalAlpha = 1;
+    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life / 400); circle(p.x, p.y, p.size); ctx.globalAlpha = 1;
   }
 
-  // HUD draw handled by DOM elements (score chips)
+  // power-up icon on HUD
+  let activeText = '—';
+  if (activePower.shield > 0) activeText = 'Shield ⏳' + Math.ceil(activePower.shield/1000)+'s';
+  else if (activePower.magnet > 0) activeText = 'Magnet ⏳' + Math.ceil(activePower.magnet/1000)+'s';
+  else if (activePower.doublejump > 0) activeText = 'Double-Jump ⏳' + Math.ceil(activePower.doublejump/1000)+'s';
+  else {
+    // permanent perks
+    if (save.perks && (save.perks['perk_doublejump'] || save.perks['perk_magnet'] || save.perks['perk_shield'])) {
+      const perks = [];
+      if (save.perks['perk_doublejump']) perks.push('DJ');
+      if (save.perks['perk_magnet']) perks.push('MG');
+      if (save.perks['perk_shield']) perks.push('SH');
+      activeText = perks.join(' ');
+    }
+  }
+  document.getElementById('powerChip').textContent = 'Power: ' + activeText;
+  document.getElementById('scoreVal').textContent = Math.round(score);
 }
 
-function drawHills(){
-  // simple layered hills for parallax
+/* ---------------------
+   Helper draw functions
+   --------------------- */
+function roundRect(x,y,w,h,r,fill=true){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if (fill) ctx.fill(); }
+function circle(x,y,r){ ctx.beginPath(); ctx.ellipse(x,y,r,r,0,0,Math.PI*2); ctx.fill(); }
+function drawNeonHills(){
+  // subtle parallax neon shapes
   for (let i=0;i<3;i++){
-    ctx.fillStyle = ['#FDECF7','#E9E9FF','#DDF6F8'][i];
+    ctx.fillStyle = ['rgba(30,30,50,0.6)','rgba(12,18,30,0.6)','rgba(6,10,18,0.6)'][i];
     ctx.beginPath();
-    const amp = 60 + i*30;
-    ctx.moveTo(-200, H*0.85 - i*40);
-    for (let x=-200; x<=W+400; x+=80){
-      const y = H*0.85 - i*40 - Math.sin((x*0.002) + i) * amp;
+    const amp = 80 + i*20;
+    ctx.moveTo(-200, H*0.86 - i*36);
+    for (let x=-200; x<=W+400; x+=100) {
+      const y = H*0.86 - i*36 - Math.sin((x*0.002)+(i*0.6)) * amp;
       ctx.lineTo(x, y);
     }
     ctx.lineTo(W+400, H+200); ctx.lineTo(-200, H+200); ctx.closePath(); ctx.fill();
   }
 }
 
-/* Drawing helpers */
-function roundRect(ctx, x, y, w, h, r, fill, stroke){
-  if (r === undefined) r = 5;
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-  if (fill) ctx.fill();
-  if (stroke) ctx.stroke();
-}
-function circle(ctx, x, y, r){ ctx.beginPath(); ctx.ellipse(x, y, r, r, 0, 0, Math.PI*2); ctx.fill(); }
+/* ---------------------
+   UI: shop, menu, events
+   --------------------- */
+document.getElementById('startBtn').addEventListener('click', ()=> startRun());
+document.getElementById('shopBtn').addEventListener('click', ()=> { menu.style.display = 'none'; shop.style.display = 'flex'; buildShop(); });
+document.getElementById('howBtn').addEventListener('click', ()=> { menu.style.display='none'; how.style.display='flex'; });
+document.getElementById('howBack').addEventListener('click', ()=> { how.style.display='none'; menu.style.display='flex'; });
+document.getElementById('shopBack').addEventListener('click', ()=> { shop.style.display='none'; menu.style.display='flex'; });
+document.getElementById('resetBtn').addEventListener('click', ()=> { if (confirm('Reset save? This clears high score, coins, skins and perks.')) { localStorage.removeItem(SAVE_KEY); save = loadSave(); applySaveToUI(); buildShop(); }});
+document.getElementById('resumeBtn').addEventListener('click', ()=> togglePause());
+document.getElementById('restartBtn').addEventListener('click', ()=> restartRun());
+document.getElementById('tryBtn').addEventListener('click', ()=> { restartRun(); document.getElementById('gameOver').style.display='none'; });
+document.getElementById('menuBtn').addEventListener('click', ()=> { document.getElementById('gameOver').style.display='none'; menu.style.display='flex'; });
 
-///// ----------------- Utilities / housekeeping
-function updateUI(){
-  coinsChip.textContent = 'Coins: ' + ((save.totalCoins || 0) + coinsCollected);
-  distChip.textContent = 'Distance: ' + Math.round(distanceMeters) + 'm';
-  scoreVal.textContent = Math.round(score);
-  highScoreEl.textContent = Math.round(save.highScore || 0);
-  savedCoinsEl.textContent = Math.round(save.totalCoins || 0);
-  // particles update
-  const now = performance.now();
-  const dt = 16.67;
-  for (let i=particles.length-1;i>=0;i--){
-    const p = particles[i];
-    p.life -= dt;
-    if (p.life <= 0) particles.splice(i,1);
-    p.vy += 0.06;
-    p.x += p.vx;
-    p.y += p.vy;
-  }
+function applySaveToUI(){
+  document.getElementById('highScore').textContent = Math.round(save.highScore || 0);
+  document.getElementById('savedCoins').textContent = Math.round(save.totalCoins || 0);
+  document.getElementById('coinsChip').textContent = 'Coins: ' + ( (save.totalCoins || 0) + coinsCollectedRun );
 }
 
-function rectIntersect(a,b){ return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h); }
-
-///// ----------------- Shop UI
+/* ---------------------
+   Shop builder
+   --------------------- */
 function buildShop(){
-  shopGrid.innerHTML = '';
-  for (const skin of SKINS){
+  const grid = document.getElementById('shopGrid');
+  grid.innerHTML = '';
+  // skins
+  for (const s of SKINS) {
     const card = document.createElement('div'); card.className = 'skinCard';
-    const preview = document.createElement('div'); preview.className = 'skinPreview'; preview.style.background = skin.color; preview.textContent = skin.name[0];
-    const title = document.createElement('div'); title.textContent = skin.name; title.style.fontWeight = '700';
-    const price = document.createElement('div'); price.textContent = skin.price === 0 ? 'Free' : skin.price + ' coins'; price.style.marginTop = '6px';
-    const btn = document.createElement('button'); btn.className = 'btn alt'; btn.style.marginTop = '8px';
-    const owned = (save.ownedSkins || []).includes(skin.id);
+    const preview = document.createElement('div'); preview.className='skinPreview'; preview.style.background = s.color; preview.textContent = s.name[0];
+    const name = document.createElement('div'); name.textContent = s.name; name.style.fontWeight='700';
+    const price = document.createElement('div'); price.textContent = s.price === 0 ? 'Free' : s.price + ' coins';
+    const btn = document.createElement('button'); btn.className='btn'; btn.style.width='100%';
+    const owned = (save.ownedSkins||[]).includes(s.id);
     if (owned) {
-      btn.textContent = (save.equipped === skin.id) ? 'Equipped' : 'Equip';
-      btn.onclick = ()=> { save.equipped = skin.id; saveState(); buildShop(); }
+      btn.textContent = save.equipped === s.id ? 'Equipped' : 'Equip';
+      btn.addEventListener('click', ()=> { save.equipped = s.id; saveGame(); buildShop(); });
     } else {
       btn.textContent = 'Buy';
-      btn.onclick = ()=> {
-        if ((save.totalCoins || 0) >= skin.price) {
-          save.totalCoins = (save.totalCoins || 0) - skin.price;
-          (save.ownedSkins || (save.ownedSkins=[])).push(skin.id);
-          save.equipped = skin.id;
-          saveState();
-          buildShop();
-          updateUI();
-        } else {
-          alert('Not enough coins.');
-        }
-      }
+      btn.addEventListener('click', ()=> {
+        if ((save.totalCoins || 0) >= s.price) {
+          save.totalCoins = (save.totalCoins || 0) - s.price;
+          (save.ownedSkins || (save.ownedSkins = [])).push(s.id);
+          save.equipped = s.id;
+          saveGame(); applySaveToUI(); buildShop();
+        } else alert('Not enough coins');
+      });
     }
-    card.appendChild(preview); card.appendChild(title); card.appendChild(price); card.appendChild(btn);
-    shopGrid.appendChild(card);
+    card.appendChild(preview); card.appendChild(name); card.appendChild(price); card.appendChild(btn);
+    grid.appendChild(card);
+  }
+  // perks
+  for (const p of PERKS) {
+    const card = document.createElement('div'); card.className = 'skinCard';
+    const name = document.createElement('div'); name.textContent = p.name; name.style.fontWeight='700';
+    const price = document.createElement('div'); price.textContent = p.price + ' coins';
+    const btn = document.createElement('button'); btn.className='btn alt'; btn.style.width='100%';
+    const owned = !!(save.perks && save.perks[p.key]);
+    btn.textContent = owned ? 'Owned' : 'Buy';
+    btn.addEventListener('click', ()=> {
+      if (owned) return;
+      if ((save.totalCoins || 0) >= p.price) {
+        save.totalCoins = (save.totalCoins || 0) - p.price;
+        save.perks = save.perks || {};
+        save.perks[p.key] = true;
+        saveGame(); applySaveToUI(); buildShop();
+        alert(`${p.name} purchased! It will apply automatically in future runs.`);
+      } else alert('Not enough coins');
+    });
+    card.appendChild(name); card.appendChild(price); card.appendChild(btn); grid.appendChild(card);
   }
 }
 
-///// ----------------- Event wiring
-startBtn.addEventListener('click', ()=> startRun());
-shopBtn.addEventListener('click', ()=> { menuEl.style.display = 'none'; shopEl.style.display = 'flex'; });
-closeShopBtn.addEventListener('click', ()=> { shopEl.style.display = 'none'; menuEl.style.display = 'flex'; });
-resetBtn.addEventListener('click', ()=> {
-  if (confirm('Reset save? This clears high score, coins, and owned skins.')) {
-    localStorage.removeItem(STORAGE_KEY);
-    save = loadSave();
-    buildShop();
-    updateUI();
-  }
-});
-resumeBtn.addEventListener('click', ()=> { togglePause(); });
-restartBtn.addEventListener('click', ()=> { restartRun(); });
-tryAgainBtn.addEventListener('click', ()=> { restartRun(); gameOverPanel.style.display = 'none'; });
-backMenuBtn.addEventListener('click', ()=> { menuEl.style.display = 'flex'; gameOverPanel.style.display = 'none'; });
+/* ---------------------
+   Utility: handle world restart & apply UI initially
+   --------------------- */
+resetWorld();
+applySaveToUI();
+buildShop();
 
-///// ----------------- Helper random
-function randRange(min,max) { return min + Math.random()*(max-min); }
-
-///// ----------------- Start with menu visible
-menuEl.style.display = 'flex';
-shopEl.style.display = 'none';
+/* ensure menu visible initially */
+menu.style.display = 'flex';
+shop.style.display = 'none';
+how.style.display = 'none';
 pausePanel.style.display = 'none';
 gameOverPanel.style.display = 'none';
 
