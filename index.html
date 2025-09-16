@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bernau Runner — Cute Endless Runner</title>
+<style>
+  :root { --bg1:#FFF6FB; --bg2:#E8F7FF; --accent:#FFD6E0; --muted:#6b6b6b; }
+  html,body { height:100%; margin:0; font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial; background: linear-gradient(180deg,var(--bg1),var(--bg2)); }
+  #gameCanvas { display:block; width:100vw; height:100vh; background:transparent; }
+  #ui { position:absolute; inset:0; pointer-events:none; }
+  .centerMenu { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
+  .panel { background: rgba(255,255,255,0.9); border-radius:12px; padding:18px; text-align:center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width:860px; max-width:92%; }
+  .title { font-size:34px; margin:0 0 6px; }
+  .sub { margin:0 0 14px; color:var(--muted); font-size:14px; }
+  .btn { display:inline-block; pointer-events:auto; border:0; background:linear-gradient(180deg,#FFD6E0,#FF9CCC); color:#1a1a1a; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer; }
+  .btn.alt { background:linear-gradient(180deg,#D7F0FF,#A9E0FF); }
+  #hud { position:absolute; left:12px; top:12px; pointer-events:none; display:flex; gap:10px; align-items:center; }
+  .chip { background:rgba(255,255,255,0.95); padding:8px 10px; border-radius:10px; font-weight:700; color:#222; pointer-events:none; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+  #bigScore { position:absolute; top:12px; left:50%; transform:translateX(-50%); pointer-events:none; font-weight:800; font-size:22px; color:#222; background: rgba(255,255,255,0.95); padding:8px 14px; border-radius:12px; }
+  #controls { position:absolute; bottom:12px; left:12px; background:rgba(255,255,255,0.95); padding:8px 10px; border-radius:10px; font-size:13px; color:#222; }
+  #shopGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin-top:12px; }
+  .skinCard { background:rgba(255,255,255,0.98); padding:8px; border-radius:10px; text-align:center; box-shadow:0 8px 16px rgba(0,0,0,0.06); }
+  .skinPreview { width:68px; height:86px; margin:0 auto 8px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .muted { color:var(--muted); font-size:13px; }
+  @media (max-width:720px) { .panel { padding:12px; } .title { font-size:22px; } .bigTitle { font-size:26px; } }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui">
+  <div id="hud">
+    <div class="chip" id="coinsChip">Coins: 0</div>
+    <div class="chip" id="distChip">Distance: 0m</div>
+  </div>
+
+  <div id="bigScore">Score: <span id="scoreVal">0</span></div>
+
+  <div id="menu" class="centerMenu">
+    <div class="panel" id="menuPanel">
+      <h2 class="title">Bernau Runner</h2>
+      <div class="sub">Cute endless runner — jump, slide, collect coins and buy skins. Space to jump • Down to slide • P pause</div>
+      <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
+        <button id="startBtn" class="btn">Play (Space)</button>
+        <button id="shopBtn" class="btn alt">Shop</button>
+        <button id="resetBtn" class="btn" style="background:linear-gradient(180deg,#FFD6A6,#FFB27A)">Reset Save</button>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:center; align-items:center;">
+        <div class="muted">High Score:</div><div id="highScore" class="muted" style="font-weight:800">0</div>
+        <div style="width:10px"></div>
+        <div class="muted">Total Coins:</div><div id="savedCoins" class="muted" style="font-weight:800">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="shop" class="centerMenu" style="display:none;">
+    <div class="panel" id="shopPanel">
+      <h3 class="title">Shop — Skins</h3>
+      <div class="sub">Buy new colors for your runner. Owned skins persist. Equip a skin to use it in-game.</div>
+      <div id="shopGrid"></div>
+      <div style="margin-top:12px;">
+        <button id="closeShop" class="btn alt">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pausePanel" class="centerMenu" style="display:none;">
+    <div class="panel">
+      <h3 class="title">Paused</h3>
+      <div class="sub">Press P to resume or R to restart the run.</div>
+      <div style="display:flex; gap:8px; justify-content:center;">
+        <button id="resumeBtn" class="btn alt">Resume (P)</button>
+        <button id="restartBtn" class="btn">Restart (R)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameOverPanel" class="centerMenu" style="display:none;">
+    <div class="panel">
+      <h3 class="title">Run Over</h3>
+      <div class="sub">Score: <span id="finalScore">0</span> • Distance: <span id="finalDist">0</span>m • Coins: <span id="finalCoins">0</span></div>
+      <div style="display:flex; gap:8px; justify-content:center;">
+        <button id="tryAgainBtn" class="btn">Try Again</button>
+        <button id="backMenuBtn" class="btn alt">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="controls" style="display:block;">Controls: Space = jump • Down/S = slide • P = pause • R = restart</div>
+</div>
+
+<script>
+/*
+Bernau Runner — Cute Endless Runner
+Single-file game with:
+- Auto-run scrolling world
+- Jump (space / tap) and slide (down / S)
+- Coins, obstacles, platforms, distance & score
+- Shop with skins, using coins persisted in localStorage
+- Pause (P), Restart (R), Start menu
+- Responsive canvas and simple particle effects
+*/
+
+///// ----------------- Configuration
+const GAME_CONFIG = {
+  gravity: 0.55,
+  jumpPower: 11.6,
+  slideDuration: 520, // ms
+  runSpeedBase: 3.2,   // base world scroll speed
+  speedIncreasePerMeter: 0.02, // difficulty scaling
+  coinValue: 1
+};
+
+const LEVEL_SEED = 1337; // not used but reserved for future deterministic levels
+
+// Skins available in shop
+const SKINS = [
+  {id:'sun', name:'Sunbeam', color:'#FFD28A', price:0},
+  {id:'mint', name:'Mint', color:'#C8FFD0', price:18},
+  {id:'lav', name:'Lavender', color:'#D8C6FF', price:34},
+  {id:'peach', name:'Peach', color:'#FFC6A8', price:65},
+  {id:'starlit', name:'Starlit', color:'#FFF59A', price:110},
+];
+
+const STORAGE_KEY = 'bernau_runner_save_v1';
+
+///// ----------------- Canvas setup
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = innerWidth;
+let H = canvas.height = innerHeight;
+window.addEventListener('resize', ()=> { W = canvas.width = innerWidth; H = canvas.height = innerHeight; });
+
+///// ----------------- UI nodes
+const menuEl = document.getElementById('menu');
+const shopEl = document.getElementById('shop');
+const pausePanel = document.getElementById('pausePanel');
+const gameOverPanel = document.getElementById('gameOverPanel');
+const startBtn = document.getElementById('startBtn');
+const shopBtn = document.getElementById('shopBtn');
+const resetBtn = document.getElementById('resetBtn');
+const closeShopBtn = document.getElementById('closeShop');
+const resumeBtn = document.getElementById('resumeBtn');
+const restartBtn = document.getElementById('restartBtn');
+const tryAgainBtn = document.getElementById('tryAgainBtn');
+const backMenuBtn = document.getElementById('backMenuBtn');
+
+const coinsChip = document.getElementById('coinsChip');
+const distChip = document.getElementById('distChip');
+const scoreVal = document.getElementById('scoreVal');
+const highScoreEl = document.getElementById('highScore');
+const savedCoinsEl = document.getElementById('savedCoins');
+
+const finalScoreEl = document.getElementById('finalScore');
+const finalDistEl = document.getElementById('finalDist');
+const finalCoinsEl = document.getElementById('finalCoins');
+
+const shopGrid = document.getElementById('shopGrid');
+
+///// ----------------- Save / shop state
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { highScore:0, totalCoins:0, ownedSkins:['sun'], equipped:'sun' };
+    const p = JSON.parse(raw);
+    return {
+      highScore: p.highScore || 0,
+      totalCoins: p.totalCoins || 0,
+      ownedSkins: Array.isArray(p.ownedSkins) ? p.ownedSkins : ['sun'],
+      equipped: p.equipped || 'sun'
+    };
+  } catch(e) {
+    return { highScore:0, totalCoins:0, ownedSkins:['sun'], equipped:'sun' };
+  }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(save)); }
+let save = loadSave();
+
+///// ----------------- Game state
+let running = false;
+let paused = false;
+let lastFrame = performance.now();
+let dtAccum = 0;
+
+// Player
+const player = {
+  x: 160,
+  y: 0,
+  w: 44,
+  h: 60,
+  vy: 0,
+  onGround: false,
+  sliding: false,
+  slideTimer: 0,
+  color: '#FFD28A'
+};
+
+// World
+let scroll = 0;        // total distance scrolled in pixels
+let meters = 0;        // converted meters for HUD
+let runSpeed = GAME_CONFIG.runSpeedBase;
+let spawnTimer = 0;
+
+// Entities: platforms, obstacles, coins
+let platforms = [];
+let obstacles = [];
+let coins = [];
+let particles = [];
+
+// Score
+let score = 0;
+let coinsCollected = 0;
+let distanceMeters = 0;
+
+// Input
+const keys = {};
+window.addEventListener('keydown', (e)=> { keys[e.key.toLowerCase()] = true; if (!running && e.key === ' ') startRun(); if (e.key === 'p' && running) togglePause(); if (e.key === 'r' && running) restartRun(); });
+window.addEventListener('keyup', (e)=> keys[e.key.toLowerCase()] = false;
+
+// Touch / click -> jump
+canvas.addEventListener('pointerdown', (e)=> {
+  // small area taps for slide vs jump detection could be implemented; for simplicity: tap to jump
+  if (running && !paused) attemptJump();
+});
+
+///// ----------------- Initialization
+resetGameState();
+updateUI();
+buildShop();
+
+///// ----------------- Core functions
+
+function resetGameState() {
+  // reset gameplay variables for a fresh run
+  scroll = 0; meters = 0; runSpeed = GAME_CONFIG.runSpeedBase; spawnTimer = 0;
+  platforms = [];
+  obstacles = [];
+  coins = [];
+  particles = [];
+  score = 0; coinsCollected = 0; distanceMeters = 0;
+  player.y = H - groundHeight() - player.h;
+  player.vy = 0; player.onGround = true; player.sliding = false; player.slideTimer = 0;
+  // start with a long initial platform
+  platforms.push({ x: -800, y: player.y + player.h, w: 2000, h: 18 });
+  // ensure small variations ahead
+  for (let i=0;i<3;i++) generateChunk();
+}
+
+function groundHeight() {
+  return Math.round(H * 0.12); // ground band height from bottom
+}
+
+function startRun(){
+  resetGameState();
+  running = true;
+  paused = false;
+  lastFrame = performance.now();
+  menuEl.style.display = 'none';
+  shopEl.style.display = 'none';
+  pausePanel.style.display = 'none';
+  gameOverPanel.style.display = 'none';
+  requestAnimationFrame(loop);
+}
+
+function endRun() {
+  running = false;
+  // update high score & total coins
+  if (score > save.highScore) save.highScore = Math.round(score);
+  save.totalCoins = (save.totalCoins || 0) + coinsCollected;
+  saveState();
+  // show game over
+  document.getElementById('finalScore').textContent = Math.round(score);
+  document.getElementById('finalDist').textContent = Math.round(distanceMeters);
+  document.getElementById('finalCoins').textContent = coinsCollected;
+  // show UI
+  gameOverPanel.style.display = 'flex';
+  updateUI();
+}
+
+function restartRun(){
+  resetGameState();
+  running = true;
+  paused = false;
+  lastFrame = performance.now();
+  menuEl.style.display = 'none';
+  gameOverPanel.style.display = 'none';
+  requestAnimationFrame(loop);
+}
+
+function togglePause(){
+  paused = !paused;
+  pausePanel.style.display = paused ? 'flex' : 'none';
+  if (!paused) {
+    lastFrame = performance.now();
+    requestAnimationFrame(loop);
+  }
+}
+
+// attempt to jump
+function attemptJump(){
+  if (!running || paused) return;
+  if (player.onGround && !player.sliding) {
+    player.vy = -GAME_CONFIG.jumpPower;
+    player.onGround = false;
+    spawnParticles(player.x + player.w/2, player.y + player.h, '#9DF7A8', 8);
+  } else if (player.onGround && player.sliding) {
+    // sliding + jump gives small extra push
+    player.vy = -GAME_CONFIG.jumpPower * 0.88;
+    player.sliding = false; player.slideTimer = 0;
+  }
+}
+
+// start sliding
+function startSlide(){
+  if (!running || paused) return;
+  if (player.onGround && !player.sliding) {
+    player.sliding = true;
+    player.slideTimer = GAME_CONFIG.slideDuration;
+    // shrink height visually
+  }
+}
+
+// stop sliding
+function stopSlide(){
+  player.sliding = false;
+  player.slideTimer = 0;
+}
+
+// small particle spawn
+function spawnParticles(x,y,color,count=8){
+  for (let i=0;i<count;i++){
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5)*3,
+      vy: -Math.random()*3 - 1,
+      life: 400 + Math.random()*300,
+      color,
+      size: 2 + Math.random()*3
+    });
+  }
+}
+
+///// ----------------- Procedural generation
+// Generates obstacles, coins and small platforms ahead
+function generateChunk() {
+  // place chunks relative to last platform end
+  let last = platforms[platforms.length-1];
+  const startX = last ? (last.x + last.w) : (scroll + W + 200);
+  // create a sequence of segments (gaps and small platform islands)
+  let x = startX + randRange(140, 280);
+  const segments = 4 + Math.floor(Math.random()*3);
+  for (let s=0;s<segments;s++){
+    // platform height relative to ground
+    const groundY = H - groundHeight();
+    const yOffset = randRange(-80, 40);
+    const pw = randRange(80, 220);
+    const py = groundY - 18 + yOffset;
+    platforms.push({ x: x, y: py, w: pw, h: 18 });
+    // maybe add coins above
+    if (Math.random() < 0.8) {
+      const coinCount = 1 + Math.floor(Math.random()*3);
+      for (let c=0;c<coinCount;c++){
+        coins.push({ x: x + 16 + Math.random()*(pw-32), y: py - 28 - Math.random()*24, r:8, taken:false });
+      }
+    }
+    // maybe add obstacle on platform
+    if (Math.random() < 0.4) {
+      const obsX = x + 20 + Math.random()*(pw-40);
+      obstacles.push({ x: obsX, y: py - 30, w: 26, h: 30, type:'spike' });
+    }
+    x += pw + randRange(120, 320);
+  }
+}
+
+///// ----------------- Update loop
+function loop(now){
+  if (!running) return;
+  const dt = Math.min(40, now - lastFrame); lastFrame = now;
+  if (!paused) update(dt);
+  draw();
+  if (running) requestAnimationFrame(loop);
+}
+
+function update(dt){
+  // speed scales slightly with distance
+  const speedFactor = 1 + (Math.max(0, meters/15) * GAME_CONFIG.speedIncreasePerMeter);
+  const currentSpeed = runSpeed * speedFactor;
+
+  // advance world scroll
+  scroll += currentSpeed * (dt / 16.67); // normalize to frame
+  distanceMeters = scroll * 0.02; // px -> meters roughly
+  meters = distanceMeters;
+
+  // spawn more content when needed
+  spawnTimer += dt;
+  if (spawnTimer > 420) {
+    spawnTimer = 0;
+    generateChunk();
+  }
+
+  // player physics
+  player.vy += GAME_CONFIG.gravity * (dt/16.67);
+  player.y += player.vy * (dt / 16.67);
+
+  // ground collision
+  const groundY = H - groundHeight();
+  if (player.y + player.h >= groundY) {
+    player.y = groundY - player.h;
+    player.vy = 0;
+    player.onGround = true;
+  } else {
+    player.onGround = false;
+  }
+
+  // sliding timer
+  if (player.sliding) {
+    player.slideTimer -= dt;
+    if (player.slideTimer <= 0) stopSlide();
+  }
+
+  // update obstacles / coins positions relative to scroll (we keep world coords, but collision uses scroll)
+  // remove old objects far left
+  platforms = platforms.filter(p => (p.x + p.w - scroll) > -400);
+  coins = coins.filter(c => (c.x - scroll) > -200 && !c.taken);
+  obstacles = obstacles.filter(o => (o.x - scroll) > -200);
+
+  // collisions: coins
+  for (const c of coins) {
+    const px = player.x, py = player.y;
+    let pw = player.w, ph = player.h;
+    if (player.sliding) { ph = player.h * 0.55; }
+    const dx = (px + pw/2) - c.x;
+    const dy = (py + ph/2) - c.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (!c.taken && dist < 28) {
+      c.taken = true;
+      coinsCollected++;
+      spawnParticles(c.x, c.y, '#FFD66B', 10);
+      score += 12;
+    }
+  }
+
+  // collisions: obstacles (spike)
+  for (const o of obstacles) {
+    // we treat obstacle coords in world-space; collision if player intersects and obstacle not passed
+    const ox = o.x - scroll, oy = o.y;
+    const playerRect = { x: player.x, y: player.y, w: player.w, h: player.h };
+    const obsRect = { x: ox, y: oy, w: o.w, h: o.h };
+    if (rectIntersectWorld(playerRect, obsRect)) {
+      // hit — run over
+      endRun();
+      return;
+    }
+  }
+
+  // also if player falls into a big gap (no platform below) -> if y too low (off-screen) end run
+  if (player.y > H + 140) { endRun(); return; }
+
+  // score increases by distance and coins
+  score += (currentSpeed * (dt/16.67)) * 0.3;
+  // update UI
+  updateUI();
+}
+
+function rectIntersectWorld(playerRect, obsRect) {
+  // obsRect is in screen coords (ox), playerRect in screen coords too; just check overlap
+  if (playerRect.x < obsRect.x + obsRect.w && playerRect.x + playerRect.w > obsRect.x &&
+      playerRect.y < obsRect.y + obsRect.h && playerRect.y + playerRect.h > obsRect.y) {
+    return true;
+  }
+  return false;
+}
+
+///// ----------------- Input behavior mapping
+// Keyboard actions
+window.addEventListener('keydown', (e)=> {
+  if (!running) return;
+  if (e.key === ' ' || e.code === 'Space') { attemptJump(); e.preventDefault(); }
+  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') { startSlide(); e.preventDefault(); }
+});
+
+// release slide on keyup
+window.addEventListener('keyup', (e)=> {
+  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') stopSlide();
+});
+
+///// ----------------- Drawing
+function draw(){
+  // clear & background
+  ctx.clearRect(0,0,W,H);
+  // sky gradient
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#FFF4F9'); g.addColorStop(0.6,'#F3F9FF'); g.addColorStop(1,'#E7F7FF');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+  // parallax hills
+  drawHills();
+
+  // ground band
+  const groundY = H - groundHeight();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, groundY, W, groundHeight());
+  ctx.fillStyle = '#EDEDED';
+  ctx.fillRect(0, groundY + 6, W, 3);
+
+  // draw platforms (world coords -> screen by subtracting scroll)
+  ctx.save();
+  ctx.translate(-Math.round(scroll), 0);
+
+  // platforms
+  for (const p of platforms) {
+    ctx.fillStyle = '#CDE8FF';
+    roundRect(ctx, p.x, p.y, p.w, p.h, 8, true, false);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(ctx, p.x + 6, p.y + 2, Math.max(0,p.w - 12), 6, 6, true, false);
+  }
+
+  // coins
+  for (const c of coins) {
+    if (c.taken) continue;
+    ctx.fillStyle = '#FFD66B';
+    circle(ctx, c.x, c.y, c.r);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; circle(ctx, c.x - c.r*0.2, c.y - c.r*0.25, c.r*0.22);
+  }
+
+  // obstacles (in world coordinates)
+  for (const o of obstacles) {
+    // draw spike
+    ctx.fillStyle = '#FF5A5A';
+    const sx = o.x, sy = o.y;
+    const sc = 4;
+    for (let i=0;i<Math.floor(o.w / 12); i++){
+      const cx = sx + 6 + i*12;
+      ctx.beginPath(); ctx.moveTo(cx - 6, sy + o.h); ctx.lineTo(cx, sy); ctx.lineTo(cx + 6, sy + o.h); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  // star / bonuses could be here (none for now)
+
+  ctx.restore();
+
+  // draw player (screen coords)
+  // if sliding, shrink height and lower y
+  const drawX = player.x;
+  let drawY = player.y;
+  let drawW = player.w;
+  let drawH = player.h;
+  if (player.sliding) {
+    drawH = Math.round(player.h * 0.56);
+    drawY = player.y + (player.h - drawH);
+  }
+  const skin = SKINS.find(s => s.id === (save.equipped || 'sun')) || SKINS[0];
+  ctx.fillStyle = skin.color || '#FFD28A';
+  roundRect(ctx, drawX, drawY, drawW, drawH, 10, true, false);
+  // eyes
+  ctx.fillStyle = '#2B2B2B';
+  ctx.beginPath(); ctx.ellipse(drawX + drawW * 0.30, drawY + drawH * 0.36, 4, 5, 0, 0, Math.PI*2); ctx.ellipse(drawX + drawW * 0.70, drawY + drawH * 0.36, 4, 5, 0, 0, Math.PI*2); ctx.fill();
+
+  // particles (screen coords)
+  for (const p of particles) {
+    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life/600); circle(ctx, p.x, p.y, p.size); ctx.globalAlpha = 1;
+  }
+
+  // HUD draw handled by DOM elements (score chips)
+}
+
+function drawHills(){
+  // simple layered hills for parallax
+  for (let i=0;i<3;i++){
+    ctx.fillStyle = ['#FDECF7','#E9E9FF','#DDF6F8'][i];
+    ctx.beginPath();
+    const amp = 60 + i*30;
+    ctx.moveTo(-200, H*0.85 - i*40);
+    for (let x=-200; x<=W+400; x+=80){
+      const y = H*0.85 - i*40 - Math.sin((x*0.002) + i) * amp;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W+400, H+200); ctx.lineTo(-200, H+200); ctx.closePath(); ctx.fill();
+  }
+}
+
+/* Drawing helpers */
+function roundRect(ctx, x, y, w, h, r, fill, stroke){
+  if (r === undefined) r = 5;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+function circle(ctx, x, y, r){ ctx.beginPath(); ctx.ellipse(x, y, r, r, 0, 0, Math.PI*2); ctx.fill(); }
+
+///// ----------------- Utilities / housekeeping
+function updateUI(){
+  coinsChip.textContent = 'Coins: ' + ((save.totalCoins || 0) + coinsCollected);
+  distChip.textContent = 'Distance: ' + Math.round(distanceMeters) + 'm';
+  scoreVal.textContent = Math.round(score);
+  highScoreEl.textContent = Math.round(save.highScore || 0);
+  savedCoinsEl.textContent = Math.round(save.totalCoins || 0);
+  // particles update
+  const now = performance.now();
+  const dt = 16.67;
+  for (let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i,1);
+    p.vy += 0.06;
+    p.x += p.vx;
+    p.y += p.vy;
+  }
+}
+
+function rectIntersect(a,b){ return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h); }
+
+///// ----------------- Shop UI
+function buildShop(){
+  shopGrid.innerHTML = '';
+  for (const skin of SKINS){
+    const card = document.createElement('div'); card.className = 'skinCard';
+    const preview = document.createElement('div'); preview.className = 'skinPreview'; preview.style.background = skin.color; preview.textContent = skin.name[0];
+    const title = document.createElement('div'); title.textContent = skin.name; title.style.fontWeight = '700';
+    const price = document.createElement('div'); price.textContent = skin.price === 0 ? 'Free' : skin.price + ' coins'; price.style.marginTop = '6px';
+    const btn = document.createElement('button'); btn.className = 'btn alt'; btn.style.marginTop = '8px';
+    const owned = (save.ownedSkins || []).includes(skin.id);
+    if (owned) {
+      btn.textContent = (save.equipped === skin.id) ? 'Equipped' : 'Equip';
+      btn.onclick = ()=> { save.equipped = skin.id; saveState(); buildShop(); }
+    } else {
+      btn.textContent = 'Buy';
+      btn.onclick = ()=> {
+        if ((save.totalCoins || 0) >= skin.price) {
+          save.totalCoins = (save.totalCoins || 0) - skin.price;
+          (save.ownedSkins || (save.ownedSkins=[])).push(skin.id);
+          save.equipped = skin.id;
+          saveState();
+          buildShop();
+          updateUI();
+        } else {
+          alert('Not enough coins.');
+        }
+      }
+    }
+    card.appendChild(preview); card.appendChild(title); card.appendChild(price); card.appendChild(btn);
+    shopGrid.appendChild(card);
+  }
+}
+
+///// ----------------- Event wiring
+startBtn.addEventListener('click', ()=> startRun());
+shopBtn.addEventListener('click', ()=> { menuEl.style.display = 'none'; shopEl.style.display = 'flex'; });
+closeShopBtn.addEventListener('click', ()=> { shopEl.style.display = 'none'; menuEl.style.display = 'flex'; });
+resetBtn.addEventListener('click', ()=> {
+  if (confirm('Reset save? This clears high score, coins, and owned skins.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    save = loadSave();
+    buildShop();
+    updateUI();
+  }
+});
+resumeBtn.addEventListener('click', ()=> { togglePause(); });
+restartBtn.addEventListener('click', ()=> { restartRun(); });
+tryAgainBtn.addEventListener('click', ()=> { restartRun(); gameOverPanel.style.display = 'none'; });
+backMenuBtn.addEventListener('click', ()=> { menuEl.style.display = 'flex'; gameOverPanel.style.display = 'none'; });
+
+///// ----------------- Helper random
+function randRange(min,max) { return min + Math.random()*(max-min); }
+
+///// ----------------- Start with menu visible
+menuEl.style.display = 'flex';
+shopEl.style.display = 'none';
+pausePanel.style.display = 'none';
+gameOverPanel.style.display = 'none';
+
+</script>
+</body>
+</html>
