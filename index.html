@@ -3,52 +3,48 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Run Raider — Dark Endless Runner with Power-ups</title>
+<title>Run Raider v2 — Dark Edition</title>
 <style>
   :root{
-    --bg1:#07070b; --bg2:#0f1016; --panel:#0f1720; --accent:#00e5ff; --accent2:#ff6b6b; --muted:#9aa3b2;
+    --bg1:#05050a; --bg2:#0b0b12; --panel:#0f1720; --neon:#00d7ff; --danger:#ff6b6b; --muted:#9aa3b2;
   }
-  html,body{ height:100%; margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#dfe7ef; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-  canvas{ display:block; width:100vw; height:100vh; background:transparent; }
-  /* UI overlay */
+  html,body{ height:100%; margin:0; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#dfe7ef; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+  canvas{ display:block; width:100vw; height:100vh; }
   #ui{ position:absolute; inset:0; pointer-events:none; }
   .panel{ background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); border-radius:12px; padding:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6); color:#e6eef6; }
   .center{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:auto; }
   .menuBox{ width:840px; max-width:94%; text-align:center; gap:8px; display:flex; flex-direction:column; align-items:center; }
-  h1{ margin:0; font-size:34px; letter-spacing:0.6px; color:#ffffff; text-shadow:0 6px 30px rgba(0,0,0,0.6); }
+  h1{ margin:0; font-size:34px; color:#fff; text-shadow:0 6px 30px rgba(0,0,0,0.6); }
   p.lead{ margin:0; color:var(--muted); font-size:13px; }
   .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  button.btn{ pointer-events:auto; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; background:linear-gradient(180deg,#0ff9ff10,#00e5ff14); color:var(--accent); border:1px solid rgba(0,229,255,0.06); }
-  button.btn.alt{ background:linear-gradient(180deg,#ff6b6b10,#ff6b6b12); color:var(--accent2); border:1px solid rgba(255,107,107,0.06); }
+  button.btn{ pointer-events:auto; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; background:linear-gradient(180deg,#0ff9ff10,#00d7ff14); color:var(--neon); border:1px solid rgba(0,215,255,0.06); }
+  button.btn.alt{ background:linear-gradient(180deg,#ff6b6b10,#ff6b6b12); color:var(--danger); border:1px solid rgba(255,107,107,0.06); }
   button.btn.ghost{ background:transparent; color:var(--muted); border:1px dashed rgba(255,255,255,0.04); }
   #hud{ position:absolute; left:16px; top:12px; display:flex; gap:10px; align-items:center; pointer-events:none; }
   .chip{ background:rgba(255,255,255,0.02); padding:8px 10px; border-radius:10px; border:1px solid rgba(255,255,255,0.03); font-weight:700; font-size:13px; color:#dfe7ef; }
   #bigScore{ position:absolute; left:50%; transform:translateX(-50%); top:12px; pointer-events:none; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); font-weight:800; font-size:18px; }
   #controls{ position:absolute; bottom:12px; left:12px; pointer-events:none; background:rgba(255,255,255,0.02); border-radius:10px; padding:8px; border:1px solid rgba(255,255,255,0.02); color:var(--muted); font-size:13px; }
-  /* shop grid */
   #shopGrid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap:10px; width:760px; max-width:94%; }
   .skinCard{ background:rgba(255,255,255,0.02); padding:10px; border-radius:10px; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:auto; border:1px solid rgba(255,255,255,0.02); }
   .skinPreview{ width:68px; height:86px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:800; box-shadow: 0 8px 18px rgba(0,0,0,0.6); color:#101218; }
-  /* small responsive */
   @media (max-width:720px){ h1{ font-size:26px } .menuBox{ padding:10px } #shopGrid{ grid-template-columns:repeat(2,1fr) } }
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="canvas"></canvas>
 
 <div id="ui">
   <div id="hud">
     <div class="chip" id="coinsChip">Coins: 0</div>
     <div class="chip" id="powerChip">Power: —</div>
   </div>
-
   <div id="bigScore">RUN RAIDER — Score: <span id="scoreVal">0</span></div>
 
   <!-- Main Menu -->
   <div id="menu" class="center">
     <div class="menuBox panel">
-      <h1>RUN RAIDER</h1>
-      <p class="lead">Darker, serious neon-runner. Collect power-ups: Shield, Magnet, Double-Jump. Survive and climb the leaderboard.</p>
+      <h1>RUN RAIDER — Dark Edition</h1>
+      <p class="lead">Edgy neon runner with lethal gadgets. New obstacles: saws, lasers, turrets. Skins & permanent perks in Shop.</p>
       <div class="row">
         <button id="startBtn" class="btn">Start (Space)</button>
         <button id="shopBtn" class="btn">Shop</button>
@@ -67,7 +63,7 @@
   <div id="how" class="center" style="display:none; pointer-events:auto;">
     <div class="panel menuBox">
       <h1>How to Play</h1>
-      <p class="lead">Space: jump (double-jump if you have it) • Down / S: slide • Collect coins and power-ups. P: pause, R: restart. Power-ups last briefly — plan their use.</p>
+      <p class="lead">Space: jump (double-jump if available). Down / S: slide. Avoid saws, lasers, turrets — watch for warnings. Collect coins & power-ups.</p>
       <div class="row"><button id="howBack" class="btn">Back</button></div>
     </div>
   </div>
@@ -75,8 +71,8 @@
   <!-- Shop -->
   <div id="shop" class="center" style="display:none; pointer-events:auto;">
     <div class="panel menuBox">
-      <h1>Shop — Skins & Power-ups</h1>
-      <p class="lead">Buy skins with coins. Power-ups can be bought as permanent perks (optional) or found during runs.</p>
+      <h1>Shop — Dark Skins & Perks</h1>
+      <p class="lead">Skins match the dark theme. Buy permanent perks: shield/magnet/double-jump.</p>
       <div id="shopGrid"></div>
       <div class="row" style="margin-top:8px;"><button id="shopBack" class="btn">Close</button></div>
     </div>
@@ -104,60 +100,50 @@
 </div>
 
 <script>
-/* Run Raider
- - Darker neon style endless runner
- - Power-ups: Shield (invulnerable), Magnet (pulls coins), Double-Jump
- - Shop with skins and optional permanent perks
- - LocalStorage save for high score, coins, owned skins, equipped skin, purchased perks
- - Buttons and UI fixed to be clickable
+/* Run Raider v2 — Dark Edition
+  - Evil edgy main character (drawn)
+  - New obstacles: saw, laser, turret (telegraphed, balanced)
+  - Slower difficulty scaling
+  - Dark-themed skins in Shop + perks + persistence
+  - Clickable DOM UI
 */
 
-// Canvas setup
-const canvas = document.getElementById('c');
+// Canvas
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 let W = canvas.width = innerWidth;
 let H = canvas.height = innerHeight;
 window.addEventListener('resize', ()=> { W = canvas.width = innerWidth; H = canvas.height = innerHeight; });
 
-/* ---------------------
-   Game config and state
-   --------------------- */
+/* Config */
 const CONFIG = {
   gravity: 0.56,
-  jumpPower: 12.2,
-  baseSpeed: 3.4,
-  speedScalePer100: 0.6,
+  jumpPower: 11.6,
+  baseSpeed: 3.0,              // base scroll speed (slower)
+  speedRamp: 0.0009,           // ramp per px (much slower than before)
   slideDuration: 520,
   coinValue: 1
 };
+const POWERUP_DUR = { shield:4500, magnet:5000, doublejump:7500 };
 
-// power-up durations (ms)
-const POWERUP_DUR = {
-  shield: 4500,
-  magnet: 5000,
-  doublejump: 7500
-};
-
-// skins and shop items
+/* Skins and Perks (dark-themed) */
 const SKINS = [
   { id:'raider', name:'Raider', color:'#2ee8ff', price:0 },
-  { id:'onyx', name:'Onyx', color:'#9fb6ff', price:40 },
-  { id:'ember', name:'Ember', color:'#ff7d7d', price:85 },
-  { id:'neon', name:'Neon', color:'#8affb3', price:140 },
-  { id:'void', name:'Void', color:'#bdb7ff', price:220 },
+  { id:'onyx', name:'Onyx Raider', color:'#101018', accent:'#9fb6ff', price:45 },
+  { id:'ember', name:'Ember Wraith', color:'#ff6b6b', accent:'#421010', price:95 },
+  { id:'neon', name:'Neon Revenant', color:'#8affb3', accent:'#06110a', price:155 },
+  { id:'void', name:'Void Shade', color:'#bdb7ff', accent:'#0b050f', price:260 }
 ];
-// permanent perks in shop (optional): buy to spawn with the perk permanently
 const PERKS = [
-  { id:'perk_doublejump', name:'Permanent Double-Jump', price:150, key:'perk_doublejump' },
-  { id:'perk_magnet', name:'Permanent Magnet', price:130, key:'perk_magnet' },
-  { id:'perk_shield', name:'Permanent Shield', price:170, key:'perk_shield' }
+  { id:'perk_doublejump', name:'Permanent Double-Jump', price:160, key:'perk_doublejump' },
+  { id:'perk_magnet', name:'Permanent Magnet', price:140, key:'perk_magnet' },
+  { id:'perk_shield', name:'Permanent Shield', price:190, key:'perk_shield' }
 ];
 
-// localStorage key
-const SAVE_KEY = 'run_raider_v1';
+const SAVE_KEY = 'run_raider_v2_save';
 
-// Save structure: { highScore, totalCoins, ownedSkins[], equipped, perks: {perk_doublejump:true,...} }
-function loadSave() {
+/* Save */
+function loadSave(){
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return { highScore:0, totalCoins:0, ownedSkins:['raider'], equipped:'raider', perks:{} };
@@ -169,41 +155,19 @@ function loadSave() {
       equipped: p.equipped || 'raider',
       perks: p.perks || {}
     };
-  } catch (e) {
-    return { highScore:0, totalCoins:0, ownedSkins:['raider'], equipped:'raider', perks:{} };
-  }
+  } catch { return { highScore:0, totalCoins:0, ownedSkins:['raider'], equipped:'raider', perks:{} }; }
 }
-function saveGame() { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
+function saveGame(){ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
 let save = loadSave();
 
-/* ---------------------
-   Runtime state
-   --------------------- */
-let running = false, paused = false;
-let lastTime = performance.now();
-
-// world / runner
-let scroll = 0;      // total pixels scrolled
-let speed = CONFIG.baseSpeed;
-let distance = 0;
-let score = 0;
-let coinsCollectedRun = 0;
-let spawnTimer = 0;
-
-// entities: platforms, coins, obstacles, powerups
-let platforms = [], coins = [], obstacles = [], powerups = [], particles = [];
-
-// player
-const player = {
-  x: 160, y: 0, w: 44, h: 60,
-  vy: 0, onGround: true, sliding: false, slideTimer:0,
-  jumpsUsed:0, maxJumps:1
-};
-
-// active power-ups (timed)
+/* Runtime state */
+let running=false, paused=false, lastTime=performance.now(), animId=null;
+let scroll=0, speed=CONFIG.baseSpeed, distance=0, score=0, coinsCollectedRun=0, spawnTimer=0;
+let platforms=[], coins=[], obstacles=[], powerups=[], particles=[];
+const player = { x:160, y:0, w:46, h:66, vy:0, onGround:true, sliding:false, slideTimer:0, jumpsUsed:0, maxJumps:1 };
 let activePower = { shield:0, magnet:0, doublejump:0 };
 
-// UI refs
+/* UI refs */
 const menu = document.getElementById('menu'), shop = document.getElementById('shop'), how = document.getElementById('how');
 const pausePanel = document.getElementById('pause'), gameOverPanel = document.getElementById('gameOver');
 const coinsChip = document.getElementById('coinsChip'), powerChip = document.getElementById('powerChip');
@@ -211,18 +175,13 @@ const scoreVal = document.getElementById('scoreVal'), highScoreEl = document.get
 const savedCoinsEl = document.getElementById('savedCoins');
 const finalScore = document.getElementById('finalScore'), finalCoins = document.getElementById('finalCoins');
 
-applySaveToUI();
-
-/* ---------------------
-   Input handling
-   --------------------- */
+/* Input */
 const keys = {};
 window.addEventListener('keydown', (e)=> {
   keys[e.key.toLowerCase()] = true;
   if (!running && e.key === ' ') startRun();
   if (e.key === 'p') togglePause();
   if (e.key === 'r' && running) restartRun();
-  // gameplay keys
   if (running && !paused) {
     if (e.key === ' ' || e.code === 'Space') attemptJump();
     if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') startSlide();
@@ -232,37 +191,30 @@ window.addEventListener('keyup', (e)=> {
   keys[e.key.toLowerCase()] = false;
   if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') stopSlide();
 });
-// pointer tap => jump
 canvas.addEventListener('pointerdown', (e)=> {
-  if (running && !paused) attemptJump();
-  else if (!running) startRun();
+  if (running && !paused) attemptJump(); else if (!running) startRun();
 });
 
-/* ---------------------
-   Generation helpers
-   --------------------- */
-function groundY() { return Math.round(H * 0.14); }
-function resetWorld() {
-  scroll = 0; speed = CONFIG.baseSpeed; distance = 0; score = 0; coinsCollectedRun = 0; spawnTimer = 0;
+/* Helpers */
+function groundY(){ return Math.round(H * 0.14); }
+function randRange(a,b){ return a + Math.random()*(b-a); }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+/* Reset world */
+function resetWorld(){
+  scroll=0; speed=CONFIG.baseSpeed; distance=0; score=0; coinsCollectedRun=0; spawnTimer=0;
   platforms = []; coins = []; obstacles = []; powerups = []; particles = [];
-  player.y = H - groundY() - player.h; player.vy = 0; player.onGround = true; player.sliding=false; player.slideTimer=0; player.jumpsUsed=0;
+  player.y = H - groundY() - player.h; player.vy = 0; player.onGround=true; player.sliding=false; player.slideTimer=0; player.jumpsUsed=0;
+  // permanent double-jump perk
+  player.maxJumps = save.perks && save.perks['perk_doublejump'] ? 2 : 1;
   // initial long platform
-  platforms.push({ x:-800, y: player.y + player.h, w: 2200, h: 18 });
-  // spawn some initial chunks
+  platforms.push({ x:-900, y: player.y + player.h, w: 2400, h: 18 });
   for (let i=0;i<3;i++) generateChunk();
-  // grant starting permanent perks if purchased
-  if (save.perks && save.perks['perk_doublejump']) player.maxJumps = 2; else player.maxJumps = 1;
-  if (save.perks && save.perks['perk_doublejump']) player.jumpsUsed = 0;
 }
 
-/* conservative spacing and chunk gen */
-function computeGap() {
-  // random gap in px
-  return 120 + Math.random()*300;
-}
-
-function generateChunk() {
-  // append platforms, coins, obstacles, powerups further to the right
+/* Ready chunks generation with obstacle types: spike, saw, laser, turret (balanced) */
+function computeGap(){ return 140 + Math.random()*260; }
+function generateChunk(){
   const last = platforms[platforms.length-1];
   let x = last ? (last.x + last.w + computeGap()) : (scroll + W + 120);
   const segments = 2 + Math.floor(Math.random()*4);
@@ -271,18 +223,34 @@ function generateChunk() {
     const pw = 100 + Math.random()*220;
     const py = ground - 18 + (Math.random()*80 - 30);
     platforms.push({ x: x, y: py, w: pw, h: 18 });
-    // maybe add coins
+    // coins
     if (Math.random() < 0.86) {
       const coinCount = 1 + Math.floor(Math.random()*3);
-      for (let c=0;c<coinCount;c++){
-        coins.push({ x: x + 16 + Math.random()*(pw - 32), y: py - 28 - Math.random()*36, r: 8, taken:false });
-      }
+      for (let c=0;c<coinCount;c++) coins.push({ x: x + 16 + Math.random()*(pw-32), y: py - 28 - Math.random()*36, r:8, taken:false });
     }
-    // maybe obstacle (spike)
-    if (Math.random() < 0.36) {
-      obstacles.push({ x: x + 20 + Math.random()*(pw - 40), y: py - 30, w: 26, h: 30 });
+    // obstacle choices with probabilities, but avoid impossible combos
+    const obstacleRoll = Math.random();
+    // ensure not to place two heavy obstacles in a row: check recent obstacles positions
+    const lastObsX = obstacles.length ? obstacles[obstacles.length-1].x : -9999;
+    // Saw: moves slowly on short track
+    if (obstacleRoll < 0.28 && Math.random() < 0.96) {
+      const sx = x + 20 + Math.random()*(pw - 40);
+      const sy = py - 28;
+      obstacles.push({ type:'saw', x:sx, y:sy, w:34, h:34, dir: (Math.random()<0.5?1:-1), range: 60 + Math.random()*60, speed: 1 + Math.random()*0.6 });
+    } else if (obstacleRoll < 0.48) {
+      // turret on platform — fires slow projectiles, telegraphed windup
+      const tx = x + 20 + Math.random()*(pw - 40), ty = py - 30;
+      obstacles.push({ type:'turret', x:tx, y:ty, w:28, h:28, fireTimer: 1200 + Math.random()*700, cooldown: 1200 + Math.random()*800 });
+    } else if (obstacleRoll < 0.60 && (Math.random() < 0.72)) {
+      // Laser: place off to the side; it will warn after some time then fire vertical beam for a short window.
+      const lx = x + 10 + Math.random()*(pw-20);
+      obstacles.push({ type:'laser', x:lx, y:py - 150, w:12, h: 160, warn: 800 + Math.random()*400, fire: 550, cooldown: 1600 + Math.random()*900, state:0, timer:0 });
+    } else if (Math.random() < 0.34) {
+      // small spike obstacle (as earlier)
+      const sx = x + 20 + Math.random()*(pw - 40), sy = py - 30;
+      obstacles.push({ type:'spike', x:sx, y:sy, w:26, h:30 });
     }
-    // rarely spawn power-up pickup
+    // small chance of powerup
     if (Math.random() < 0.12) {
       const types = ['shield','magnet','doublejump'];
       const t = types[Math.floor(Math.random()*types.length)];
@@ -292,55 +260,28 @@ function generateChunk() {
   }
 }
 
-/* ---------------------
-   Power-up logic
-   --------------------- */
-function grantPowerup(type) {
-  if (type === 'shield') {
-    activePower.shield = POWERUP_DUR.shield;
-  } else if (type === 'magnet') {
-    activePower.magnet = POWERUP_DUR.magnet;
-  } else if (type === 'doublejump') {
-    activePower.doublejump = POWERUP_DUR.doublejump;
-    player.maxJumps = Math.max(player.maxJumps, 2);
-  }
+/* Power-ups logic */
+function grantPowerup(type){
+  if (type === 'shield') activePower.shield = POWERUP_DUR.shield;
+  else if (type === 'magnet') activePower.magnet = POWERUP_DUR.magnet;
+  else if (type === 'doublejump') { activePower.doublejump = POWERUP_DUR.doublejump; player.maxJumps = Math.max(player.maxJumps, 2); }
 }
 
-/* ---------------------
-   Main loop & update
-   --------------------- */
-let animId = null;
-function startRun() {
+/* Main run control */
+function startRun(){
   resetWorld();
-  running = true; paused = false;
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('shop').style.display = 'none';
-  document.getElementById('how').style.display = 'none';
-  document.getElementById('gameOver').style.display = 'none';
+  running = true; paused=false;
+  menu.style.display='none'; shop.style.display='none'; how.style.display='none'; gameOverPanel.style.display='none';
   lastTime = performance.now();
   animId = requestAnimationFrame(loop);
 }
-
-function restartRun() { resetWorld(); running = true; paused = false; document.getElementById('gameOver').style.display='none'; lastTime = performance.now(); animId = requestAnimationFrame(loop); }
-
-function togglePause(){
-  paused = !paused;
-  document.getElementById('pause').style.display = paused ? 'flex' : 'none';
-  if (!paused) {
-    lastTime = performance.now();
-    animId = requestAnimationFrame(loop);
-  } else {
-    if (animId) cancelAnimationFrame(animId);
-  }
-}
-
-function endRun() {
-  running = false;
-  // finalize score & save coins
+function restartRun(){ resetWorld(); running=true; paused=false; document.getElementById('gameOver').style.display='none'; lastTime = performance.now(); animId = requestAnimationFrame(loop); }
+function togglePause(){ paused = !paused; document.getElementById('pause').style.display = paused ? 'flex' : 'none'; if (!paused) { lastTime = performance.now(); animId = requestAnimationFrame(loop); } else if (animId) cancelAnimationFrame(animId); }
+function endRun(){
+  running=false;
   if (score > save.highScore) save.highScore = Math.round(score);
   save.totalCoins = (save.totalCoins || 0) + coinsCollectedRun;
   saveGame();
-  // show game over
   document.getElementById('finalScore').textContent = Math.round(score);
   document.getElementById('finalCoins').textContent = coinsCollectedRun;
   document.getElementById('gameOver').style.display = 'flex';
@@ -348,7 +289,8 @@ function endRun() {
   if (animId) cancelAnimationFrame(animId);
 }
 
-function loop(now) {
+/* Loop */
+function loop(now){
   if (!running) return;
   const dt = Math.min(40, now - lastTime); lastTime = now;
   if (!paused) update(dt);
@@ -356,84 +298,117 @@ function loop(now) {
   animId = requestAnimationFrame(loop);
 }
 
-function update(dt) {
-  // speed scaling with distance
-  const speedFactor = 1 + (distance / 100) * (CONFIG.speedScalePer100 / 100);
-  speed = CONFIG.baseSpeed + speedFactor;
+/* Update */
+function update(dt){
+  // slower ramp: speed increases gently with distance
+  speed += CONFIG.speedRamp * (dt) * 0.3;
   const worldShift = speed * (dt / 16.67);
   scroll += worldShift;
   distance += worldShift * 0.02;
-  score += worldShift * 0.25;
+  // score accumulates more slowly than before
+  score += worldShift * 0.18;
 
-  // spawn new chunks
   spawnTimer += dt;
   if (spawnTimer > 420) { spawnTimer = 0; generateChunk(); }
 
   // player physics
   player.vy += CONFIG.gravity * (dt / 16.67);
   player.y += player.vy * (dt / 16.67);
-  // ground
   const ground = H - groundY();
-  if (player.y + player.h >= ground) {
-    player.y = ground - player.h;
-    player.vy = 0;
-    player.onGround = true;
-    player.jumpsUsed = 0;
-  } else {
-    player.onGround = false;
-  }
+  if (player.y + player.h >= ground) { player.y = ground - player.h; player.vy = 0; player.onGround = true; player.jumpsUsed = 0; } else { player.onGround=false; }
 
-  // slide handling
   if (player.sliding) {
     player.slideTimer -= dt;
     if (player.slideTimer <= 0) stopSlide();
   }
 
-  // move platforms/coins/obstacles relative to scroll: we keep world coords and detect collisions subtracting scroll
-  // coins collect
+  // coins: magnet attraction & collection
   for (const c of coins) {
     if (c.taken) continue;
     const sx = c.x - scroll;
-    // magnet effect
-    if (activePower.magnet > 0) {
-      // If within 240px horizontally, slowly pull toward player
+    if (activePower.magnet > 0 || save.perks['perk_magnet']) {
       if (Math.abs(sx - player.x) < 260) {
-        c.x += (player.x - sx) * 0.06; // in world coords, approximate attract
+        // pull toward player (world coords)
+        c.x += (player.x - sx) * 0.06 * (dt/16.67);
       }
     }
     const dx = (player.x + player.w/2) - sx;
     const dy = (player.y + player.h/2) - c.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < 28) {
-      c.taken = true;
-      coinsCollectedRun += CONFIG.coinValue;
-      score += 16;
-      spawnParticles(sx, c.y, '#ffd66b', 10);
-    }
+    if (Math.sqrt(dx*dx + dy*dy) < 28) { c.taken = true; coinsCollectedRun += CONFIG.coinValue; score += 14; spawnParticles(sx, c.y, '#ffd66b', 10); }
   }
 
-  // obstacles collision
-  for (const o of obstacles) {
-    const ox = o.x - scroll;
-    const oy = o.y;
-    // rectangle collision with player
-    const pRect = { x: player.x, y: player.y, w: player.w, h: player.h };
-    const oRect = { x: ox, y: oy, w: o.w, h: o.h };
-    if (rectsOverlap(pRect, oRect)) {
-      if (activePower.shield > 0 || save.perks['perk_shield']) {
-        // consume shield if active (if permanent perk, we don't consume)
-        if (!save.perks['perk_shield']) activePower.shield = 0;
-        // destroy obstacle visually
-        spawnParticles(ox + o.w/2, oy + o.h/2, '#ff7d7d', 12);
-      } else {
-        // death
-        endRun(); return;
+  // obstacles behavior and collision
+  for (let i=0;i<obstacles.length;i++){
+    const o = obstacles[i];
+    if (o.type === 'saw') {
+      // saw moves back and forth on short track
+      o._pos = o._pos || o.x;
+      o._off = o._off || 0;
+      o._off += o.dir * o.speed * (dt/16.67);
+      // bounce
+      if (Math.abs(o._off) > o.range) o.dir *= -1;
+      // collision: world->screen
+      const sx = o._pos + o._off - scroll;
+      const sy = o.y;
+      if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:sx, y:sy, w:o.w, h:o.h})) {
+        if (activePower.shield>0 || save.perks['perk_shield']) { if (!save.perks['perk_shield']) activePower.shield = 0; spawnParticles(sx+o.w/2, sy+o.h/2, '#ff7d7d',12); }
+        else { endRun(); return; }
+      }
+    } else if (o.type === 'turret') {
+      o.fireTimer = (o.fireTimer||o.cooldown) - dt;
+      if (o.fireTimer <= 0) {
+        // fire projectile: slow and obvious
+        const proj = { x: o.x - scroll, y: o.y + 6, w:14, h:8, vx: -2.2, life: 3000, owner:'turret' };
+        // world coords
+        // convert sx -> world x
+        const worldX = o.x;
+        // push projectile with world coords
+        obstacles.push({ type:'proj', x: worldX, y: o.y + 6, w:14, h:8, vx: -2.2, life: 2200 });
+        o.fireTimer = o.cooldown;
+      }
+    } else if (o.type === 'proj') {
+      // projectiles travel left in world coords
+      o.x += o.vx * (dt/16.67) * 16.67; // scale consistent
+      o.life -= dt;
+      if (o.life <= 0) { obstacles.splice(i,1); i--; continue; }
+      const sx = o.x - scroll;
+      if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:sx,y:o.y,w:o.w,h:o.h})) {
+        if (activePower.shield>0 || save.perks['perk_shield']) { if (!save.perks['perk_shield']) activePower.shield = 0; spawnParticles(sx + o.w/2, o.y + o.h/2, '#ff7d7d', 10); obstacles.splice(i,1); i--; continue; }
+        else { endRun(); return; }
+      }
+      if (o.x - scroll < -400) { obstacles.splice(i,1); i--; continue; }
+    } else if (o.type === 'laser') {
+      o.timer = (o.timer||0) + dt;
+      if (!o.state) { // warning phase
+        if (o.timer >= o.warn) { o.state = 1; o.timer = 0; }
+      } else if (o.state === 1) { // firing
+        // beam active for 'fire' ms
+        // draw handled in draw(); collision check below
+        if (o.timer >= o.fire) { o.state = 2; o.timer = 0; }
+      } else { // cooldown
+        if (o.timer >= o.cooldown) { o.state = 0; o.timer = 0; }
+      }
+      // collision detection when firing
+      if (o.state === 1) {
+        const beamX = o.x - scroll;
+        // beam vertical area: y .. y + h
+        const beamRect = { x: beamX - 6, y: o.y, w: 12, h: o.h };
+        if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h}, beamRect)) {
+          if (activePower.shield>0 || save.perks['perk_shield']) { if (!save.perks['perk_shield']) activePower.shield = 0; spawnParticles(beamRect.x + 8, beamRect.y + beamRect.h/2, '#ff7d7d', 10); }
+          else { endRun(); return; }
+        }
+      }
+    } else if (o.type === 'spike') {
+      const sx = o.x - scroll;
+      if (rectsOverlap({x:player.x,y:player.y,w:player.w,h:player.h},{x:sx,y:o.y,w:o.w,h:o.h})) {
+        if (activePower.shield>0 || save.perks['perk_shield']) { if (!save.perks['perk_shield']) activePower.shield = 0; spawnParticles(sx + o.w/2, o.y + o.h/2, '#ff7d7d', 10); }
+        else { endRun(); return; }
       }
     }
   }
 
-  // powerup pickups
-  for (const pu of powerups) {
+  // powerups pickups
+  for (const pu of powerups){
     if (pu.picked) continue;
     const sx = pu.x - scroll;
     const dx = (player.x + player.w/2) - sx;
@@ -441,46 +416,38 @@ function update(dt) {
     if (Math.sqrt(dx*dx + dy*dy) < 34) {
       pu.picked = true;
       grantPowerup(pu.type);
-      spawnParticles(sx, pu.y, pu.type === 'magnet' ? '#8affb3' : (pu.type==='shield' ? '#9dd7ff' : '#ffd78a'), 14);
+      spawnParticles(sx, pu.y, pu.type==='magnet' ? '#8affb3' : (pu.type==='shield' ? '#9dd7ff' : '#ffd78a'), 14);
       score += 28;
     }
   }
 
-  // timers for active power-ups
-  for (const k of Object.keys(activePower)) {
-    if (activePower[k] > 0) activePower[k] -= dt;
-    if (activePower[k] < 0) activePower[k] = 0;
-  }
-  // if doublejump expired and no perk, reset maxJumps
-  if (activePower.doublejump <= 0 && !save.perks['perk_doublejump']) player.maxJumps = 1;
-
-  // clean up old entities behind screen
-  platforms = platforms.filter(p => p.x + p.w - scroll > -400);
+  // cleanup stale ones
   coins = coins.filter(c => !c.taken && c.x - scroll > -300);
-  obstacles = obstacles.filter(o => o.x - scroll > -300);
-  powerups = powerups.filter(pu => !pu.picked && pu.x - scroll > -300);
+  platforms = platforms.filter(p => p.x + p.w - scroll > -400);
+  powerups = powerups.filter(p => !p.picked && p.x - scroll > -300);
+  // obstacles list is mixed; we keep them and let individual types clean themselves
 
   // update particles
-  for (let i = particles.length-1; i>=0; i--) {
-    const p = particles[i];
-    p.life -= dt;
-    p.x += p.vx * (dt/16.67); p.y += p.vy * (dt/16.67);
-    p.vy += 0.08 * (dt/16.67);
-    if (p.life <= 0) particles.splice(i,1);
+  for (let i=particles.length-1;i>=0;i--){
+    const pr = particles[i];
+    pr.life -= dt;
+    pr.x += pr.vx * (dt/16.67);
+    pr.y += pr.vy * (dt/16.67);
+    pr.vy += 0.08 * (dt/16.67);
+    if (pr.life <= 0) particles.splice(i,1);
   }
 
-  // update HUD / UI
+  // power-up timers
+  for (const k of Object.keys(activePower)) { if (activePower[k] > 0) activePower[k] -= dt; if (activePower[k] < 0) activePower[k] = 0; }
+  if (activePower.doublejump <= 0 && !save.perks['perk_doublejump']) player.maxJumps = 1;
+
   applySaveToUI();
 }
 
-/* ---------------------
-   Collision helpers
-   --------------------- */
+/* Collision helper */
 function rectsOverlap(a,b){ return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h); }
 
-/* ---------------------
-   Player actions: jump / slide
-   --------------------- */
+/* Player actions */
 function attemptJump(){
   if (!running || paused) return;
   if (player.onGround) {
@@ -488,236 +455,221 @@ function attemptJump(){
     player.onGround = false;
     player.jumpsUsed = 1;
   } else {
-    // mid-air double-jump allowed if available
-    const canPermanent = !!save.perks['perk_doublejump'];
-    const canActive = activePower.doublejump > 0;
-    if ((player.jumpsUsed < player.maxJumps) || canPermanent || canActive) {
+    // allow double-jump if available (timed or permanent)
+    const hasPermanent = !!save.perks['perk_doublejump'];
+    const hasActive = activePower.doublejump > 0;
+    if (player.jumpsUsed < player.maxJumps || hasActive || hasPermanent) {
       player.vy = -CONFIG.jumpPower * 0.9;
       player.jumpsUsed++;
-      // if doublejump was active (timed) it does not stack; if permanent, keep maxJumps
       spawnParticles(player.x + player.w/2, player.y + player.h, '#ffd78a', 10);
     }
   }
 }
+function startSlide(){ if (!running || paused) return; if (player.onGround && !player.sliding){ player.sliding = true; player.slideTimer = CONFIG.slideDuration; } }
+function stopSlide(){ player.sliding = false; player.slideTimer = 0; }
 
-function startSlide(){
-  if (!running || paused) return;
-  if (player.onGround && !player.sliding) {
-    player.sliding = true;
-    player.slideTimer = CONFIG.slideDuration;
-  }
-}
-function stopSlide(){
-  player.sliding = false;
-  player.slideTimer = 0;
-}
-
-/* ---------------------
-   Grant power-ups (timed)
-   --------------------- */
-function grantPowerup(type){
-  if (type === 'shield') activePower.shield = POWERUP_DUR.shield;
-  if (type === 'magnet') activePower.magnet = POWERUP_DUR.magnet;
-  if (type === 'doublejump') {
-    activePower.doublejump = POWERUP_DUR.doublejump;
-    player.maxJumps = Math.max(player.maxJumps, 2);
-  }
-}
-
-/* ---------------------
-   Particles
-   --------------------- */
+/* Particles */
 function spawnParticles(x,y,color,count=8){
-  for (let i=0;i<count;i++){
-    particles.push({
-      x, y,
-      vx: (Math.random()-0.5) * 2.6,
-      vy: -Math.random()*3 - 1,
-      life: 300 + Math.random()*240,
-      size: 2 + Math.random()*3,
-      color
-    });
-  }
+  for (let i=0;i<count;i++) particles.push({ x, y, vx:(Math.random()-0.5)*3, vy:-Math.random()*3-1, life:300 + Math.random()*240, size:2 + Math.random()*3, color });
 }
 
-/* ---------------------
-   Draw routine (darker, neon aesthetics)
-   --------------------- */
+/* Draw routine with edgy character */
 function draw(){
-  // background
   ctx.clearRect(0,0,W,H);
+  // background gradient
   const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#070712'); g.addColorStop(1,'#0f1018');
+  g.addColorStop(0,'#05050a'); g.addColorStop(1,'#0b0b12');
   ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
 
-  // parallax neon skyline
+  // neon skyline
   drawNeonHills();
 
-  // ground band
+  // ground
   const gY = H - groundY();
-  ctx.fillStyle = '#0b0f14'; ctx.fillRect(0, gY, W, groundY());
+  ctx.fillStyle = '#07070b'; ctx.fillRect(0, gY, W, groundY());
   ctx.fillStyle = '#0f1720'; ctx.fillRect(0, gY+6, W, 4);
 
-  // world transform: draw world items relative to scroll
-  ctx.save();
-  ctx.translate(-Math.round(scroll), 0);
+  // world transform
+  ctx.save(); ctx.translate(-Math.round(scroll), 0);
 
   // platforms
   for (const p of platforms) {
-    ctx.fillStyle = '#101825';
-    roundRect(p.x, p.y, p.w, p.h, 8, true);
-    // neon rim
-    ctx.strokeStyle = 'rgba(0,229,255,0.06)'; ctx.lineWidth = 1;
-    ctx.strokeRect(p.x+1, p.y+1, p.w-2, p.h-2);
+    ctx.fillStyle = '#101219';
+    roundRect(p.x, p.y, p.w, p.h, 8);
+    ctx.strokeStyle = 'rgba(0,215,255,0.04)';
+    ctx.lineWidth = 1; ctx.strokeRect(p.x+1, p.y+1, p.w-2, p.h-2);
   }
 
   // coins
   for (const c of coins) {
     if (c.taken) continue;
-    ctx.fillStyle = '#ffd66b';
-    circle(c.x, c.y, c.r);
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    circle(c.x - 2, c.y - 3, c.r*0.22);
+    ctx.fillStyle = '#ffd66b'; circle(c.x, c.y, c.r);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; circle(c.x - 2, c.y - 3, c.r*0.22);
   }
 
-  // obstacles (spikes)
-  for (const o of obstacles) {
-    const sx = o.x, sy = o.y;
-    ctx.fillStyle = '#ff6b6b';
-    const spikeCount = Math.max(2, Math.floor(o.w/12));
-    for (let i=0;i<spikeCount;i++){
-      const cx = sx + 6 + i*12;
-      ctx.beginPath(); ctx.moveTo(cx - 6, sy + o.h); ctx.lineTo(cx, sy); ctx.lineTo(cx + 6, sy + o.h); ctx.closePath(); ctx.fill();
+  // obstacles: draw depending on type
+  for (const o of obstacles){
+    if (o.type === 'saw') {
+      const cx = (o._pos || o.x) + (o._off || 0);
+      const sx = cx, sy = o.y;
+      // rotating saw disc
+      ctx.save(); ctx.translate(sx + o.w/2, sy + o.h/2);
+      const rot = performance.now() / 120 * (o.dir || 1);
+      ctx.rotate(rot);
+      ctx.fillStyle = '#d9d9d9';
+      circle(0,0, o.w*0.5);
+      // teeth
+      ctx.fillStyle = '#ff6b6b';
+      for (let t=0;t<8;t++){ ctx.beginPath(); const ang = t * Math.PI/4; ctx.moveTo(Math.cos(ang)*(o.w*0.45), Math.sin(ang)*(o.w*0.45)); ctx.lineTo(Math.cos(ang+0.18)*(o.w*0.75), Math.sin(ang+0.18)*(o.w*0.75)); ctx.lineTo(Math.cos(ang-0.18)*(o.w*0.75), Math.sin(ang-0.18)*(o.w*0.75)); ctx.closePath(); ctx.fill(); }
+      ctx.restore();
+    } else if (o.type === 'turret') {
+      const tx = o.x, ty = o.y;
+      // turret base
+      ctx.fillStyle = '#0f1420'; roundRect(tx, ty, o.w, o.h, 6);
+      // barrel
+      ctx.fillStyle = '#9fb6ff'; roundRect(tx + o.w*0.25, ty - 8, o.w*0.5, 8, 4);
+      // firing windup glow if about to fire
+      const timeToFire = (o.fireTimer || o.cooldown);
+      if (timeToFire < 450) { ctx.fillStyle = 'rgba(255,107,107,0.12)'; circle(tx + o.w*0.5, ty + o.h*0.5, 26); }
+    } else if (o.type === 'proj') {
+      // projectile in world coords
+      const sx = o.x, sy = o.y;
+      ctx.fillStyle = '#ff6b6b'; roundRect(sx, sy, o.w, o.h, 4);
+    } else if (o.type === 'laser') {
+      const lx = o.x, ly = o.y;
+      // draw housing
+      ctx.fillStyle = '#0f1014'; roundRect(lx-6, ly-12, 24, 30, 6);
+      // warning flash when in warn phase
+      if ((o.state || 0) === 0) {
+        const alpha = 0.08 + 0.08*Math.sin(performance.now()/120);
+        ctx.fillStyle = `rgba(255,107,107,${alpha})`;
+        // paint faint indicator along beam path
+        ctx.fillRect(lx - 4, ly, 8, o.h);
+      } else if (o.state === 1) {
+        // active beam bright
+        ctx.fillStyle = 'rgba(255,70,70,0.92)';
+        ctx.fillRect(lx - 6, ly, 12, o.h);
+      }
+    } else if (o.type === 'spike') {
+      const sx = o.x, sy = o.y;
+      ctx.fillStyle = '#ff6b6b';
+      const spikeCount = Math.max(2, Math.floor(o.w / 12));
+      for (let s=0;s<spikeCount;s++){
+        const cx = sx + 6 + s*12;
+        ctx.beginPath(); ctx.moveTo(cx-6, sy + o.h); ctx.lineTo(cx, sy); ctx.lineTo(cx+6, sy + o.h); ctx.closePath(); ctx.fill();
+      }
     }
   }
 
-  // powerups pickups
+  // powerups
   for (const pu of powerups){
     const px = pu.x, py = pu.y;
-    if (pu.type === 'shield') {
-      ctx.fillStyle = '#9dd7ff';
-      circle(px, py, 12);
-    } else if (pu.type === 'magnet') {
-      ctx.fillStyle = '#8affb3';
-      circle(px, py, 12);
-    } else if (pu.type === 'doublejump') {
-      ctx.fillStyle = '#ffd78a';
-      circle(px, py, 12);
-    }
+    if (pu.type === 'shield') { ctx.fillStyle = '#9dd7ff'; circle(px, py, 12); }
+    else if (pu.type === 'magnet') { ctx.fillStyle = '#8affb3'; circle(px, py, 12); }
+    else if (pu.type === 'doublejump') { ctx.fillStyle = '#ffd78a'; circle(px, py, 12); }
     ctx.fillStyle = 'rgba(0,0,0,0.12)'; circle(px, py, 6);
   }
 
   ctx.restore();
 
-  // draw player (screen coords)
-  let drawX = player.x, drawY = player.y;
-  let drawW = player.w, drawH = player.h;
-  if (player.sliding) { drawH = Math.round(player.h * 0.56); drawY = player.y + (player.h - drawH); }
-  const skin = SKINS.find(s=> s.id === save.equipped) || SKINS[0];
-  ctx.fillStyle = skin.color;
-  roundRect(drawX, drawY, drawW, drawH, 10, true);
-  // eyes (neon)
-  ctx.fillStyle = '#081018'; ctx.beginPath(); ctx.ellipse(drawX + drawW*0.28, drawY + drawH*0.34, 4,5,0,0,Math.PI*2); ctx.ellipse(drawX + drawW*0.72, drawY + drawH*0.34, 4,5,0,0,Math.PI*2); ctx.fill();
-  // shield visual
-  if (activePower.shield > 0 || save.perks['perk_shield']) {
-    ctx.strokeStyle = 'rgba(157,215,255,0.35)'; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.ellipse(drawX + drawW/2, drawY + drawH/2, drawW*0.9, drawH*0.9, 0, 0, Math.PI*2); ctx.stroke();
-  }
+  // draw edgy main character (evil-looking)
+  drawEvilPlayer();
 
-  // particles
+  // particles on top
   for (const p of particles) {
-    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life / 400); circle(p.x, p.y, p.size); ctx.globalAlpha = 1;
+    ctx.fillStyle = p.color; ctx.globalAlpha = Math.max(0, p.life/400); circle(p.x, p.y, p.size); ctx.globalAlpha = 1;
   }
 
-  // power-up icon on HUD
+  // hud text update
+  document.getElementById('scoreVal').textContent = Math.round(score);
   let activeText = '—';
   if (activePower.shield > 0) activeText = 'Shield ⏳' + Math.ceil(activePower.shield/1000)+'s';
   else if (activePower.magnet > 0) activeText = 'Magnet ⏳' + Math.ceil(activePower.magnet/1000)+'s';
   else if (activePower.doublejump > 0) activeText = 'Double-Jump ⏳' + Math.ceil(activePower.doublejump/1000)+'s';
   else {
-    // permanent perks
-    if (save.perks && (save.perks['perk_doublejump'] || save.perks['perk_magnet'] || save.perks['perk_shield'])) {
-      const perks = [];
-      if (save.perks['perk_doublejump']) perks.push('DJ');
-      if (save.perks['perk_magnet']) perks.push('MG');
-      if (save.perks['perk_shield']) perks.push('SH');
-      activeText = perks.join(' ');
-    }
+    const perks = [];
+    if (save.perks['perk_doublejump']) perks.push('DJ');
+    if (save.perks['perk_magnet']) perks.push('MG');
+    if (save.perks['perk_shield']) perks.push('SH');
+    if (perks.length) activeText = perks.join(' ');
   }
   document.getElementById('powerChip').textContent = 'Power: ' + activeText;
-  document.getElementById('scoreVal').textContent = Math.round(score);
 }
 
-/* ---------------------
-   Helper draw functions
-   --------------------- */
-function roundRect(x,y,w,h,r,fill=true){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if (fill) ctx.fill(); }
-function circle(x,y,r){ ctx.beginPath(); ctx.ellipse(x,y,r,r,0,0,Math.PI*2); ctx.fill(); }
+/* Evil player drawing (horns, cape, glowing eyes, jagged mouth) */
+function drawEvilPlayer(){
+  let dx = player.x, dy = player.y;
+  let dw = player.w, dh = player.h;
+  if (player.sliding) { dh = Math.round(player.h * 0.56); dy = player.y + (player.h - dh); }
+  const skin = SKINS.find(s => s.id === save.equipped) || SKINS[0];
+  // body
+  ctx.fillStyle = skin.color;
+  roundRect(dx, dy, dw, dh, 10);
+  // jagged mouth (evil)
+  ctx.fillStyle = '#081018';
+  ctx.beginPath();
+  const mouthY = dy + dh*0.68;
+  ctx.moveTo(dx + dw*0.2, mouthY);
+  const teeth = 5;
+  for (let i=0;i<teeth;i++){
+    const tx = dx + dw*0.2 + (i*(dw*0.6)/teeth);
+    const ty = mouthY + ((i%2===0)?6:-6);
+    ctx.lineTo(tx, ty);
+  }
+  ctx.lineTo(dx + dw*0.8, mouthY);
+  ctx.closePath();
+  ctx.fill();
+  // horns
+  ctx.fillStyle = '#0b0b0f';
+  ctx.beginPath(); ctx.moveTo(dx + dw*0.18, dy - 6); ctx.lineTo(dx + dw*0.32, dy + 2); ctx.lineTo(dx + dw*0.06, dy + 4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(dx + dw*0.82, dy - 6); ctx.lineTo(dx + dw*0.68, dy + 2); ctx.lineTo(dx + dw*0.94, dy + 4); ctx.closePath(); ctx.fill();
+  // glowing eyes
+  ctx.fillStyle = (skin.accent || '#ff6b6b');
+  ctx.beginPath(); ctx.ellipse(dx + dw*0.28, dy + dh*0.3, 5, 8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(dx + dw*0.72, dy + dh*0.3, 5, 8, 0, 0, Math.PI*2); ctx.fill();
+  // cape (shadowy)
+  ctx.fillStyle = 'rgba(5,6,8,0.9)';
+  ctx.beginPath(); ctx.moveTo(dx + dw*0.5, dy + dh*0.2); ctx.bezierCurveTo(dx + dw*0.9, dy + dh*0.4, dx + dw*0.9, dy + dh*0.95, dx + dw*0.2, dy + dh*1.12); ctx.closePath(); ctx.fill();
+}
+
+/* Draw neon hills */
 function drawNeonHills(){
-  // subtle parallax neon shapes
   for (let i=0;i<3;i++){
-    ctx.fillStyle = ['rgba(30,30,50,0.6)','rgba(12,18,30,0.6)','rgba(6,10,18,0.6)'][i];
+    ctx.fillStyle = ['rgba(10,10,18,0.7)','rgba(8,10,14,0.6)','rgba(6,8,12,0.5)'][i];
     ctx.beginPath();
     const amp = 80 + i*20;
     ctx.moveTo(-200, H*0.86 - i*36);
-    for (let x=-200; x<=W+400; x+=100) {
-      const y = H*0.86 - i*36 - Math.sin((x*0.002)+(i*0.6)) * amp;
-      ctx.lineTo(x, y);
+    for (let x=-200;x<=W+400;x+=100){
+      const y = H*0.86 - i*36 - Math.sin((x*0.002)+(i*0.6))*amp;
+      ctx.lineTo(x,y);
     }
-    ctx.lineTo(W+400, H+200); ctx.lineTo(-200, H+200); ctx.closePath(); ctx.fill();
+    ctx.lineTo(W+400,H+200); ctx.lineTo(-200,H+200); ctx.closePath(); ctx.fill();
   }
 }
 
-/* ---------------------
-   UI: shop, menu, events
-   --------------------- */
-document.getElementById('startBtn').addEventListener('click', ()=> startRun());
-document.getElementById('shopBtn').addEventListener('click', ()=> { menu.style.display = 'none'; shop.style.display = 'flex'; buildShop(); });
-document.getElementById('howBtn').addEventListener('click', ()=> { menu.style.display='none'; how.style.display='flex'; });
-document.getElementById('howBack').addEventListener('click', ()=> { how.style.display='none'; menu.style.display='flex'; });
-document.getElementById('shopBack').addEventListener('click', ()=> { shop.style.display='none'; menu.style.display='flex'; });
-document.getElementById('resetBtn').addEventListener('click', ()=> { if (confirm('Reset save? This clears high score, coins, skins and perks.')) { localStorage.removeItem(SAVE_KEY); save = loadSave(); applySaveToUI(); buildShop(); }});
-document.getElementById('resumeBtn').addEventListener('click', ()=> togglePause());
-document.getElementById('restartBtn').addEventListener('click', ()=> restartRun());
-document.getElementById('tryBtn').addEventListener('click', ()=> { restartRun(); document.getElementById('gameOver').style.display='none'; });
-document.getElementById('menuBtn').addEventListener('click', ()=> { document.getElementById('gameOver').style.display='none'; menu.style.display='flex'; });
+/* Draw helpers */
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fill(); }
+function circle(x,y,r){ ctx.beginPath(); ctx.ellipse(x,y,r,r,0,0,Math.PI*2); ctx.fill(); }
 
+/* UI & Shop */
 function applySaveToUI(){
   document.getElementById('highScore').textContent = Math.round(save.highScore || 0);
   document.getElementById('savedCoins').textContent = Math.round(save.totalCoins || 0);
-  document.getElementById('coinsChip').textContent = 'Coins: ' + ( (save.totalCoins || 0) + coinsCollectedRun );
+  coinsChip.textContent = 'Coins: ' + ( (save.totalCoins || 0) + coinsCollectedRun );
 }
-
-/* ---------------------
-   Shop builder
-   --------------------- */
 function buildShop(){
-  const grid = document.getElementById('shopGrid');
-  grid.innerHTML = '';
+  const grid = document.getElementById('shopGrid'); grid.innerHTML = '';
   // skins
-  for (const s of SKINS) {
+  for (const s of SKINS){
     const card = document.createElement('div'); card.className = 'skinCard';
-    const preview = document.createElement('div'); preview.className='skinPreview'; preview.style.background = s.color; preview.textContent = s.name[0];
+    const preview = document.createElement('div'); preview.className = 'skinPreview'; preview.style.background = s.color; preview.textContent = s.name[0];
     const name = document.createElement('div'); name.textContent = s.name; name.style.fontWeight='700';
     const price = document.createElement('div'); price.textContent = s.price === 0 ? 'Free' : s.price + ' coins';
     const btn = document.createElement('button'); btn.className='btn'; btn.style.width='100%';
-    const owned = (save.ownedSkins||[]).includes(s.id);
-    if (owned) {
-      btn.textContent = save.equipped === s.id ? 'Equipped' : 'Equip';
-      btn.addEventListener('click', ()=> { save.equipped = s.id; saveGame(); buildShop(); });
-    } else {
-      btn.textContent = 'Buy';
-      btn.addEventListener('click', ()=> {
-        if ((save.totalCoins || 0) >= s.price) {
-          save.totalCoins = (save.totalCoins || 0) - s.price;
-          (save.ownedSkins || (save.ownedSkins = [])).push(s.id);
-          save.equipped = s.id;
-          saveGame(); applySaveToUI(); buildShop();
-        } else alert('Not enough coins');
-      });
-    }
-    card.appendChild(preview); card.appendChild(name); card.appendChild(price); card.appendChild(btn);
-    grid.appendChild(card);
+    const owned = (save.ownedSkins || []).includes(s.id);
+    if (owned) { btn.textContent = (save.equipped === s.id) ? 'Equipped' : 'Equip'; btn.onclick = ()=> { save.equipped = s.id; saveGame(); applySaveToUI(); buildShop(); }; }
+    else { btn.textContent = 'Buy'; btn.onclick = ()=> { if ((save.totalCoins || 0) >= s.price) { save.totalCoins -= s.price; (save.ownedSkins || (save.ownedSkins=[])).push(s.id); save.equipped = s.id; saveGame(); applySaveToUI(); buildShop(); } else alert('Not enough coins'); }; }
+    card.appendChild(preview); card.appendChild(name); card.appendChild(price); card.appendChild(btn); grid.appendChild(card);
   }
   // perks
   for (const p of PERKS) {
@@ -729,31 +681,29 @@ function buildShop(){
     btn.textContent = owned ? 'Owned' : 'Buy';
     btn.addEventListener('click', ()=> {
       if (owned) return;
-      if ((save.totalCoins || 0) >= p.price) {
-        save.totalCoins = (save.totalCoins || 0) - p.price;
-        save.perks = save.perks || {};
-        save.perks[p.key] = true;
-        saveGame(); applySaveToUI(); buildShop();
-        alert(`${p.name} purchased! It will apply automatically in future runs.`);
-      } else alert('Not enough coins');
+      if ((save.totalCoins || 0) >= p.price) { save.totalCoins -= p.price; save.perks = save.perks || {}; save.perks[p.key] = true; saveGame(); applySaveToUI(); buildShop(); alert(`${p.name} purchased.`); } else alert('Not enough coins');
     });
     card.appendChild(name); card.appendChild(price); card.appendChild(btn); grid.appendChild(card);
   }
 }
 
-/* ---------------------
-   Utility: handle world restart & apply UI initially
-   --------------------- */
+/* UI wiring */
+document.getElementById('startBtn').addEventListener('click', ()=> startRun());
+document.getElementById('shopBtn').addEventListener('click', ()=> { menu.style.display='none'; shop.style.display='flex'; buildShop(); });
+document.getElementById('howBtn').addEventListener('click', ()=> { menu.style.display='none'; how.style.display='flex'; });
+document.getElementById('howBack').addEventListener('click', ()=> { how.style.display='none'; menu.style.display='flex'; });
+document.getElementById('shopBack').addEventListener('click', ()=> { shop.style.display='none'; menu.style.display='flex'; });
+document.getElementById('resetBtn').addEventListener('click', ()=> { if (confirm('Reset save? Clears high score, coins, and purchases.')) { localStorage.removeItem(SAVE_KEY); save = loadSave(); applySaveToUI(); buildShop(); }});
+document.getElementById('resumeBtn').addEventListener('click', ()=> togglePause());
+document.getElementById('restartBtn').addEventListener('click', ()=> restartRun());
+document.getElementById('tryBtn').addEventListener('click', ()=> { restartRun(); document.getElementById('gameOver').style.display='none'; });
+document.getElementById('menuBtn').addEventListener('click', ()=> { document.getElementById('gameOver').style.display='none'; menu.style.display='flex'; });
+
+/* Initial load */
 resetWorld();
 applySaveToUI();
 buildShop();
-
-/* ensure menu visible initially */
-menu.style.display = 'flex';
-shop.style.display = 'none';
-how.style.display = 'none';
-pausePanel.style.display = 'none';
-gameOverPanel.style.display = 'none';
+menu.style.display='flex'; shop.style.display='none'; how.style.display='none'; pausePanel.style.display='none'; gameOverPanel.style.display='none';
 
 </script>
 </body>
